@@ -1,7 +1,38 @@
 -i https://pypi.org/simple
-pyld==1.0.4
+certifi==2019.9.11
+chardet==3.0.4
+click==7.0
+deprecated==1.2.6
+flask-cors==3.0.6
+flask==1.0.2
+gevent==1.4.0
+greenlet==0.4.15 ; platform_python_implementation == 'CPython'
+grlc==1.3.0
+gunicorn==19.6.0 ; sys_platform != 'win32'
+html5lib==1.0.1
+idna==2.7
+isodate==0.5.4
+itsdangerous==1.1.0
+jinja2==2.10.1
+keepalive==0.5
+markupsafe==0.23
+pathlib==1.0.1
+ply==3.11
+pyaml==18.11.0
+pygithub==1.43.5
+pyjwt==1.7.1
+pyld==1.0.5
+pyparsing==2.0.7
+pythonql3==0.9.61
+pyyaml==4.2b1
 rdflib-jsonld==0.4.0
 rdflib==4.2.2
-requests==2.21.0
-urllib3==1.24.2
-grlc
+requests==2.20.0
+simplejson==3.16.0
+six==1.11.0
+sparqltransformer==1.6.10
+sparqlwrapper==1.8.2
+urllib3==1.24.3
+webencodings==0.5.1
+werkzeug==0.14.1
+wrapt==1.11.2
