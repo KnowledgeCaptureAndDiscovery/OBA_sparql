@@ -31,5 +31,5 @@ setup(
     ],
     packages=["oba-sparql"],
     include_package_data=True,
-    install_requires=["pyld", "rdflib-jsonld", "rdflib", "requests", "urllib3", "grlc"],
+    install_requires=["requests", "urllib3"],
 )
