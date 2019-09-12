@@ -1,0 +1,16 @@
+dist: xenial
+language: python
+python:
+- '3.5'
+- '3.6'
+- '3.7'
+install: pip install tox-travis
+script: tox
+deploy:
+  provider: pypi
+  on:
+    tags: true
+  skip_existing: true
+  user: "mosorio"
+  password:
+    secure: gcnUBh8HlvjT8qYYZUhs2Rf92+Ce29hGP9h+w8+tdvoJqq4KtRwVaUx7koicKHb6NArRwpZoB6YKhouiFr3avWjXL+nUlisc4VBaO3olnE1jotjLR/2y9NZzs7O01oEV+4/juNbmEwssDHp55RtCrrZShUt/ci66nGZLrDMR4i1Ypg9Z9p2U6ye7XsjbCQjBZ0xbEkpSCfOeX7PQYjZt36/O5KjMzgeZmJKlK40L6UXfKpS0954rD3W9BlRU7GLrhl+9pRvA7zrzc19LJeQCI/HpIq3F9yUBQwvBQXkB2VAQ5qf761G8Zwdf6ysJD/1H16dbsXY8Er/eXKAdE4oYNTCgbCKrghmw12gbVGJPDOJvWfMoYm3Nr5fPc4ufa6EwxYOJ2ySiluNFbXtUM/mdV6gMFxFw7s78Dv0mXybPrR6ZkFtK0EWeTkS/BK2i/++2rmRySwh6bPREFuTTWYzoW0x7QadtNDeO6YMD7oXNCjMwWX0kTLOWmXunnyqgxJGi5Sa4Tfa4ZDTtt1POXFmqtBcbe9tWcQE27SDe4HuPiAGy04NQx6RKvXm11vKMbre4nnPgLQ1thcAuEX5OBUlCRGd56JPlB9oePQTOgzMA66igV4lw8AankYQJlXmked6Q0eMG+xndoyT+J+QxFG23+I4fOmO+fivGUvI0xZNrdK4=
