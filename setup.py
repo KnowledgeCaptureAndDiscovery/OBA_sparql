@@ -9,8 +9,8 @@ README = (HERE / "README.md").read_text()
 
 # This call to setup() does all the work
 setup(
-    name="oba_sparql",
-    version="0.0.4",
+    name="obasparql",
+    version="0.1.0",
     description="OBA Sparql Manager",
     long_description=README,
     long_description_content_type="text/markdown",
@@ -29,7 +29,7 @@ setup(
         "Intended Audience :: Science/Research",
         "Operating System :: Unix",
     ],
-    packages=["oba_sparql"],
+    packages=["obasparql"],
     include_package_data=True,
     install_requires=["requests", "urllib3"],
 )
