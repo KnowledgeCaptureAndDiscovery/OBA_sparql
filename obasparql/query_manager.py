@@ -8,7 +8,8 @@ from pyld import jsonld
 from rdflib import Graph
 from grlc import gquery
 from static import mime_types
-
+from SPARQLWrapper import SPARQLWrapper
+import re
 glogger = logging.getLogger(__name__)
 glogger.setLevel(logging.DEBUG)
 
@@ -22,14 +23,60 @@ class QueryManager:
         self.kwargs = kwargs
         queries_dir = Path(kwargs["queries_dir"])
         context_dir = Path(kwargs["context_dir"])
-        queries_types = kwargs["queries_types"]
+        default_dir = queries_dir/"_default_"
 
+        #Obtain default queries
+        for owl_class in os.listdir(default_dir):
+            queries = self.read_template(default_dir)
+            setattr(self, "_default_", queries)
+
+        #Overwrite default queries by class
         for owl_class in os.listdir(queries_dir):
-            queries = self.read_template(queries_dir / owl_class, queries_types)
-            setattr(self, owl_class, queries)
-        self.context = json.loads(self.read_context(context_dir / "context.json"))
+            queries = self.read_template(queries_dir / owl_class)
+            setattr(self, owl_class, self._default_)
+            for key, value in queries.items():
+                k = getattr(self, owl_class)
+                k[key] = queries[key]
+        temp_context = json.loads(self.read_context(context_dir / "context.json"))
+        context = temp_context.copy()
+        for key, value in context["@context"].items():
+            key_snake = self.convert_snake(key)
+            if key_snake!= key:
+                context[key_snake] = value
+            context[key] = value
 
-    def obtain_query(self, query_type, endpoint, request_args):
+    def convert_snake(self, name):
+        s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+        return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+
+    def delete_query(self, endpoint, request_args):
+        query_string = f'DELETE WHERE {{ GRAPH <{request_args["g"]}> ' \
+            f'{{ <{request_args["resource"]}> ?p ?o . }} }}'
+        sparql = SPARQLWrapper(endpoint)
+        sparql.method = 'POST'
+        try:
+            sparql.setQuery(query_string)
+            sparql.query()
+        except Exception as e:
+            logger.error("Exception occurred", exc_info=True)
+            return "Error delete query", 405, {}
+        return "Deleted", 202, {}
+
+    def insert_query(self, endpoint, request_args):
+        query_string = f'{request_args["prefixes"]}  ' \
+            f'INSERT DATA {{ GRAPH <{request_args["g"]}> ' \
+            f'{{ {request_args["triples"]} }} }}'
+        sparql = SPARQLWrapper(endpoint)
+        sparql.method = 'POST'
+        try:
+            sparql.setQuery(query_string)
+            sparql.query()
+        except Exception as e:
+            logger.error("Exception occurred", exc_info=True)
+            return False
+        return True
+
+    def obtain_query(self, owl_class_name, query_type, endpoint, request_args=None, formData=None, auth={}):
         """
         Given the owl_class and query_type, load the query template.
         Execute the query on the remote endpoint.
@@ -42,11 +89,17 @@ class QueryManager:
         :return: Framed JSON
         :rtype: string
         """
-        owl_class = request_args["owl_class"]
-        query_template = getattr(self, owl_class)[query_type]
-        resp, status, headers = dispatchSPARQLQuery(query_template, None, request_args, "application/ld+json",
-                                                         None, None, None, endpoint)
-        return self.frame_results(resp, owl_class)
+        query_template = getattr (self, owl_class_name)[query_type]
+        resp, status, headers = dispatchSPARQLQuery(raw_sparql_query=query_template,
+                                                    loader=None,
+                                                    requestArgs=request_args,
+                                                    acceptHeader="application/ld+json",
+                                                    content=None,
+                                                    formData=None,
+                                                    requestUrl=None,
+                                                    endpoint=endpoint,
+                                                    auth=auth)
+        return self.frame_results(resp, owl_class_name)
 
     def frame_results(self, resp, owl_class):
         """
@@ -60,7 +113,11 @@ class QueryManager:
         :rtype: string
         """
         frame = self.context.copy()
-        triples = json.loads(resp)
+        try:
+            triples = json.loads(resp)
+        except:
+            logger.error("json serialize failed", exc_info=True)
+
         frame['@type'] = owl_class
         framed = jsonld.frame(triples, frame)
         if '@graph' in framed:
@@ -81,15 +138,14 @@ class QueryManager:
             return reader.read()
 
     @staticmethod
-    def read_template(owl_class_dir, TYPES=None):
+    def read_template(owl_class_dir):
         queries = {}
-        for directory in TYPES:
-            for file_query in os.listdir(owl_class_dir / directory):
-                filename, file_extension = os.path.splitext(file_query)
-                if file_extension == ".rq":
-                    with open(owl_class_dir / directory / file_query, 'r') as reader:
-                        key_name = "{}_{}".format(directory, filename)
-                        queries[key_name] = reader.read()
+        for file_query in os.listdir(owl_class_dir):
+            filename, file_extension = os.path.splitext(file_query)
+            if file_extension == ".rq":
+                with open(owl_class_dir / file_query, 'r') as reader:
+                    key_name = filename
+                    queries[key_name] = reader.read()
         return queries
 
 def dispatchSPARQLQuery(raw_sparql_query, loader, requestArgs, acceptHeader, content, formData, requestUrl,

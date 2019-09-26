@@ -1,3 +1,5 @@
+from .query_manager import QueryManager
+
 def init(**kwargs):
     """Initialize OBA Sparql API Client.
     Keyword Args:
@@ -5,5 +7,4 @@ def init(**kwargs):
         context_dir (str): Directory of context.
         queries_types (array): Queries types enabled.
     """
-    _creds = _load_creds(**kwargs)
-    return ApiClient(**_creds)
+    return QueryManager(**kwargs)
