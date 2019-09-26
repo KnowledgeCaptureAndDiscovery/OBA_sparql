@@ -7,11 +7,48 @@ import requests
 from pyld import jsonld
 from rdflib import Graph
 from grlc import gquery
-from static import mime_types
 from SPARQLWrapper import SPARQLWrapper
 import re
+
+from .static import mime_types
+
 glogger = logging.getLogger(__name__)
 glogger.setLevel(logging.DEBUG)
+
+
+def insert_query(endpoint, request_args):
+    query_string = f'{request_args["prefixes"]}  ' \
+        f'INSERT DATA {{ GRAPH <{request_args["g"]}> ' \
+        f'{{ {request_args["triples"]} }} }}'
+    sparql = SPARQLWrapper(endpoint)
+    sparql.method = 'POST'
+    try:
+        sparql.setQuery(query_string)
+        sparql.query()
+    except:
+        glogger.error("Exception occurred", exc_info=True)
+        return False
+    return True
+
+
+def delete_query(endpoint, request_args):
+    query_string = f'DELETE WHERE {{ GRAPH <{request_args["g"]}> ' \
+        f'<{request_args["resource"]}> ?p ?o . }} }}'
+    sparql = SPARQLWrapper(endpoint)
+    sparql.method = 'POST'
+    try:
+        sparql.setQuery(query_string)
+        sparql.query()
+    except Exception as e:
+        glogger.error("Exception occurred", exc_info=True)
+        return "Error delete query", 405, {}
+    return "Deleted", 202, {}
+
+
+def convert_snake(name):
+    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+
 
 class QueryManager:
     def __init__(self, **kwargs):
@@ -23,63 +60,37 @@ class QueryManager:
         self.kwargs = kwargs
         queries_dir = Path(kwargs["queries_dir"])
         context_dir = Path(kwargs["context_dir"])
-        default_dir = queries_dir/"_default_"
+        default_dir = queries_dir / "_default_"
 
-        #Obtain default queries
-        for owl_class in os.listdir(default_dir):
-            queries = self.read_template(default_dir)
-            setattr(self, "_default_", queries)
+        # Obtain default queries
+        queries = self.read_template(default_dir)
+        setattr(self, "_default_", queries)
 
-        #Overwrite default queries by class
+        # Overwrite default queries by class
         for owl_class in os.listdir(queries_dir):
             queries = self.read_template(queries_dir / owl_class)
             setattr(self, owl_class, self._default_)
             for key, value in queries.items():
                 k = getattr(self, owl_class)
                 k[key] = queries[key]
+
+        # Fix: oba needs key as camelcase and snakecase
         temp_context = json.loads(self.read_context(context_dir / "context.json"))
         context = temp_context.copy()
         for key, value in context["@context"].items():
-            key_snake = self.convert_snake(key)
-            if key_snake!= key:
+            key_snake = convert_snake(key)
+            if key_snake != key:
                 context[key_snake] = value
             context[key] = value
-
-    def convert_snake(self, name):
-        s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
-        return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
-
-    def delete_query(self, endpoint, request_args):
-        query_string = f'DELETE WHERE {{ GRAPH <{request_args["g"]}> ' \
-            f'{{ <{request_args["resource"]}> ?p ?o . }} }}'
-        sparql = SPARQLWrapper(endpoint)
-        sparql.method = 'POST'
-        try:
-            sparql.setQuery(query_string)
-            sparql.query()
-        except Exception as e:
-            logger.error("Exception occurred", exc_info=True)
-            return "Error delete query", 405, {}
-        return "Deleted", 202, {}
-
-    def insert_query(self, endpoint, request_args):
-        query_string = f'{request_args["prefixes"]}  ' \
-            f'INSERT DATA {{ GRAPH <{request_args["g"]}> ' \
-            f'{{ {request_args["triples"]} }} }}'
-        sparql = SPARQLWrapper(endpoint)
-        sparql.method = 'POST'
-        try:
-            sparql.setQuery(query_string)
-            sparql.query()
-        except Exception as e:
-            logger.error("Exception occurred", exc_info=True)
-            return False
-        return True
 
     def obtain_query(self, owl_class_name, query_type, endpoint, request_args=None, formData=None, auth={}):
         """
         Given the owl_class and query_type, load the query template.
         Execute the query on the remote endpoint.
+        :param formData:
+        :type formData:
+        :param owl_class_name:
+        :type owl_class_name:
         :param query_type: The type of query. Required to load the query template.
         :type query_type: string
         :param endpoint: The url of the SPARQL endpoint
@@ -89,7 +100,7 @@ class QueryManager:
         :return: Framed JSON
         :rtype: string
         """
-        query_template = getattr (self, owl_class_name)[query_type]
+        query_template = getattr(self, owl_class_name)[query_type]
         resp, status, headers = dispatchSPARQLQuery(raw_sparql_query=query_template,
                                                     loader=None,
                                                     requestArgs=request_args,
@@ -115,8 +126,9 @@ class QueryManager:
         frame = self.context.copy()
         try:
             triples = json.loads(resp)
-        except:
-            logger.error("json serialize failed", exc_info=True)
+        except Exception:
+            glogger.error("json serialize failed", exc_info=True)
+            return []
 
         frame['@type'] = owl_class
         framed = jsonld.frame(triples, frame)
@@ -147,6 +159,7 @@ class QueryManager:
                     key_name = filename
                     queries[key_name] = reader.read()
         return queries
+
 
 def dispatchSPARQLQuery(raw_sparql_query, loader, requestArgs, acceptHeader, content, formData, requestUrl,
                         endpoint, auth={}):

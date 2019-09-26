@@ -1,5 +1,6 @@
 from .query_manager import QueryManager
 
+
 def init(**kwargs):
     """Initialize OBA Sparql API Client.
     Keyword Args:
