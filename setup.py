@@ -10,7 +10,7 @@ README = (HERE / "README.md").read_text()
 # This call to setup() does all the work
 setup(
     name="obasparql",
-    version="0.1.0",
+    version="1.1.0",
     description="OBA Sparql Manager",
     long_description=README,
     long_description_content_type="text/markdown",
