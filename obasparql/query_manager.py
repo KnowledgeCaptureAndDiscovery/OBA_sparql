@@ -16,33 +16,6 @@ glogger = logging.getLogger(__name__)
 glogger.setLevel(logging.DEBUG)
 
 
-def insert_query(endpoint, request_args):
-    query_string = f'{request_args["prefixes"]}  ' \
-        f'INSERT DATA {{ GRAPH <{request_args["g"]}> ' \
-        f'{{ {request_args["triples"]} }} }}'
-    sparql = SPARQLWrapper(endpoint)
-    sparql.method = 'POST'
-    try:
-        sparql.setQuery(query_string)
-        sparql.query()
-    except:
-        glogger.error("Exception occurred", exc_info=True)
-        return False
-    return True
-
-
-def delete_query(endpoint, request_args):
-    query_string = f'DELETE WHERE {{ GRAPH <{request_args["g"]}> ' \
-        f'<{request_args["resource"]}> ?p ?o . }} }}'
-    sparql = SPARQLWrapper(endpoint)
-    sparql.method = 'POST'
-    try:
-        sparql.setQuery(query_string)
-        sparql.query()
-    except Exception as e:
-        glogger.error("Exception occurred", exc_info=True)
-        return "Error delete query", 405, {}
-    return "Deleted", 202, {}
 
 
 def convert_snake(name):
@@ -74,14 +47,41 @@ class QueryManager:
                 k = getattr(self, owl_class)
                 k[key] = queries[key]
 
-        # Fix: oba needs key as camelcase and snakecase
+        # Fix: oba needs key as camelcase and snake_case
         temp_context = json.loads(self.read_context(context_dir / "context.json"))
-        context = temp_context.copy()
-        for key, value in context["@context"].items():
+        self.context = temp_context.copy()
+        for key, value in temp_context["@context"].items():
             key_snake = convert_snake(key)
             if key_snake != key:
-                context[key_snake] = value
-            context[key] = value
+                self.context[key_snake] = value
+    @staticmethod
+    def insert_query(endpoint, request_args):
+        query_string = f'{request_args["prefixes"]}  ' \
+            f'INSERT DATA {{ GRAPH <{request_args["g"]}> ' \
+            f'{{ {request_args["triples"]} }} }}'
+        sparql = SPARQLWrapper(endpoint)
+        sparql.method = 'POST'
+        try:
+            sparql.setQuery(query_string)
+            sparql.query()
+        except:
+            glogger.error("Exception occurred", exc_info=True)
+            return False
+        return True
+
+    @staticmethod
+    def delete_query(endpoint, request_args):
+        query_string = f'DELETE WHERE {{ GRAPH <{request_args["g"]}> ' \
+            f'<{request_args["resource"]}> ?p ?o . }} }}'
+        sparql = SPARQLWrapper(endpoint)
+        sparql.method = 'POST'
+        try:
+            sparql.setQuery(query_string)
+            sparql.query()
+        except Exception as e:
+            glogger.error("Exception occurred", exc_info=True)
+            return "Error delete query", 405, {}
+        return "Deleted", 202, {}
 
     def obtain_query(self, owl_class_name, query_type, endpoint, request_args=None, formData=None, auth={}):
         """
