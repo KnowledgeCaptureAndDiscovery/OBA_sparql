@@ -48,12 +48,16 @@ class QueryManager:
                 k[key] = queries[key]
 
         # Fix: oba needs key as camelcase and snake_case
-        temp_context = json.loads(self.read_context(context_dir / "context.json"))
+        temp_context = json.loads(self.read_context(context_dir / "context.json"))["@context"]
         self.context = temp_context.copy()
-        for key, value in temp_context["@context"].items():
+        for key, value in temp_context.items():
             key_snake = convert_snake(key)
+            self.context[key] = value
             if key_snake != key:
                 self.context[key_snake] = value
+        self.context = {"@context": self.context}
+        glogger.debug(self.context)
+
     @staticmethod
     def insert_query(endpoint, request_args):
         query_string = f'{request_args["prefixes"]}  ' \
@@ -72,7 +76,7 @@ class QueryManager:
     @staticmethod
     def delete_query(endpoint, request_args):
         query_string = f'DELETE WHERE {{ GRAPH <{request_args["g"]}> ' \
-            f'<{request_args["resource"]}> ?p ?o . }} }}'
+            f'{{ <{request_args["resource"]}> ?p ?o . }} }}'
         sparql = SPARQLWrapper(endpoint)
         sparql.method = 'POST'
         try:
@@ -110,6 +114,7 @@ class QueryManager:
                                                     requestUrl=None,
                                                     endpoint=endpoint,
                                                     auth=auth)
+        glogger.debug("response: {}".format(resp))
         return self.frame_results(resp, owl_class_name)
 
     def frame_results(self, resp, owl_class):
@@ -130,6 +135,7 @@ class QueryManager:
             glogger.error("json serialize failed", exc_info=True)
             return []
 
+        triples["@context"] = self.context
         frame['@type'] = owl_class
         framed = jsonld.frame(triples, frame)
         if '@graph' in framed:
