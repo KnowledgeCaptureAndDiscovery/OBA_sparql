@@ -6,13 +6,8 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-rdflib-jsonld = ">"
-rdflib = "*"
-requests = "*"
-urllib3 = "*"
-pathlib = "*"
-grlc = "*"
-PyLD = "*"
+pythonql3 = "==0.9.61"
+grlc = "==1.3.0"
 
 [requires]
 python_version = "3.7"
