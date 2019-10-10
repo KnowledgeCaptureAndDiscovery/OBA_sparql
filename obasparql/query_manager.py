@@ -87,7 +87,7 @@ class QueryManager:
             return "Error delete query", 405, {}
         return "Deleted", 202, {}
 
-    def obtain_query(self, owl_class_name, query_type, endpoint, request_args=None, formData=None, auth={}):
+    def obtain_query(self, owl_class_name, owl_class_uri, query_type, endpoint, request_args=None, formData=None, auth={}):
         """
         Given the owl_class and query_type, load the query template.
         Execute the query on the remote endpoint.
@@ -115,15 +115,15 @@ class QueryManager:
                                                     endpoint=endpoint,
                                                     auth=auth)
         glogger.debug("response: {}".format(resp))
-        return self.frame_results(resp, owl_class_name)
+        return self.frame_results(resp, owl_class_uri)
 
-    def frame_results(self, resp, owl_class):
+    def frame_results(self, resp, owl_class_uri):
         """
         Generate the framed using the owl_class.
         Frame the response and returns it.
         :param resp: JSON response from SPARQL
         :type resp: string
-        :param owl_class: OWL class name
+        :param owl_class_uri: OWL class uri
         :type owl_class: string
         :return: Framed JSON
         :rtype: string
@@ -134,7 +134,7 @@ class QueryManager:
             glogger.error("json serialize failed", exc_info=True)
             return []
         frame = self.context.copy()
-        frame['@type'] = owl_class
+        frame['@type'] = owl_class_uri
         framed = jsonld.frame(triples, frame)
         if '@graph' in framed:
             return framed['@graph']
