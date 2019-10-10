@@ -133,8 +133,10 @@ class QueryManager:
         except Exception:
             glogger.error("json serialize failed", exc_info=True)
             return []
+        print(triples)
         frame = self.context.copy()
         frame['@type'] = owl_class_uri
+        triples['@context'] = self.context.copy()
         framed = jsonld.frame(triples, frame)
         if '@graph' in framed:
             return framed['@graph']
