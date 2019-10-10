@@ -128,14 +128,12 @@ class QueryManager:
         :return: Framed JSON
         :rtype: string
         """
-        frame = self.context.copy()
         try:
             triples = json.loads(resp)
         except Exception:
             glogger.error("json serialize failed", exc_info=True)
             return []
-
-        triples["@context"] = self.context
+        frame = self.context.copy()
         frame['@type'] = owl_class
         framed = jsonld.frame(triples, frame)
         if '@graph' in framed:
