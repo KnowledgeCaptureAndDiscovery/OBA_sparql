@@ -7,7 +7,7 @@ import requests
 from pyld import jsonld
 from rdflib import Graph
 from grlc import gquery
-from SPARQLWrapper import SPARQLWrapper
+from SPARQLWrapper import SPARQLWrapper, POST
 import re
 
 from .static import mime_types
@@ -64,10 +64,10 @@ class QueryManager:
             f'INSERT DATA {{ GRAPH <{request_args["g"]}> ' \
             f'{{ {request_args["triples"]} }} }}'
         sparql = SPARQLWrapper(endpoint)
-        sparql.method = 'POST'
+        sparql.setMethod(POST)
         try:
             sparql.setQuery(query_string)
-            sparql.query()
+            glogger.debug("insert_query: {}".format(query_string))
         except:
             glogger.error("Exception occurred", exc_info=True)
             return False
@@ -78,10 +78,11 @@ class QueryManager:
         query_string = f'DELETE WHERE {{ GRAPH <{request_args["g"]}> ' \
             f'{{ <{request_args["resource"]}> ?p ?o . }} }}'
         sparql = SPARQLWrapper(endpoint)
-        sparql.method = 'POST'
+        sparql.setMethod(POST)
         try:
             sparql.setQuery(query_string)
-            sparql.query()
+            glogger.info("deleting {}".format(request_args["resource"]))
+            glogger.debug("deleting: {}".format(query_string))
         except Exception as e:
             glogger.error("Exception occurred", exc_info=True)
             return "Error delete query", 405, {}
@@ -133,7 +134,7 @@ class QueryManager:
         except Exception:
             glogger.error("json serialize failed", exc_info=True)
             return []
-        print(triples)
+        glogger.debug(triples)
         frame = self.context.copy()
         frame['@type'] = owl_class_uri
         triples['@context'] = self.context.copy()
