@@ -1,7 +1,7 @@
 import pathlib
 from setuptools import setup
 import codecs
-oba_version = '1.5.2'
+oba_version = '1.5.3'
 
 # The directory containing this file
 HERE = pathlib.Path(__file__).parent
