@@ -1,2 +1,10 @@
 include *.txt
 recursive-include docs *.txt
+
+# added by check_manifest.py
+include *.json
+include *.lock
+include LICENSE
+include Pipfile
+include VERSION
+recursive-include examples *.ini

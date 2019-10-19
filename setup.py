@@ -3,7 +3,7 @@ from setuptools import setup
 import codecs
 
 version = ""
-with open("VERSION") as fp:
+with open('VERSION') as fp:
     version = fp.read()
 
 
