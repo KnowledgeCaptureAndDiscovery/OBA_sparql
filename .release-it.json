@@ -1,0 +1,26 @@
+{
+  "git": {
+    "changelog": "git log --pretty=format:\"* %s (%h)\" ${latestTag}...HEAD",
+    "requireCleanWorkingDir": true,
+    "requireUpstream": true,
+    "requireCommits": false,
+    "addUntrackedFiles": false,
+    "commit": true,
+    "commitMessage": "Release ${version}",
+    "commitArgs": "",
+    "tag": true,
+    "tagName": "${version}",
+    "tagAnnotation": "Release ${version}",
+    "tagArgs": "",
+    "push": true,
+    "pushArgs": "--follow-tags",
+    "pushRepo": "origin"
+  },
+  "github": {
+    "release": true
+  },
+  "hooks": {
+    "before:release": "echo ${version} > VERSION"
+  }
+}
+
