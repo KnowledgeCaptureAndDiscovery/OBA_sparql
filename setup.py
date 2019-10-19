@@ -2,9 +2,9 @@ import pathlib
 from setuptools import setup
 import codecs
 
-version = {}
+version = ""
 with open("VERSION") as fp:
-    exec(fp.read(), version)
+    version = fp.read()
 
 
 # The directory containing this file
