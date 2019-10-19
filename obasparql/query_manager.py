@@ -67,6 +67,7 @@ class QueryManager:
         try:
             sparql.setQuery(query_string)
             glogger.debug("insert_query: {}".format(query_string))
+            sparql.query()
         except:
             glogger.error("Exception occurred", exc_info=True)
             return False
@@ -89,7 +90,10 @@ class QueryManager:
             glogger.debug("deleting: {}".format(query_string_reverse))
 
             sparql.setQuery(query_string)
+            sparql.query()
+
             sparql.setQuery(query_string_reverse)
+            sparql.query()
 
         except Exception as e:
             glogger.error("Exception occurred", exc_info=True)
