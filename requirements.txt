@@ -1,3 +1,4 @@
+pythonql3==0.9.61
 certifi==2019.9.11
 chardet==3.0.4
 check-manifest==0.40
@@ -22,7 +23,6 @@ pyaml==18.11.0
 PyGithub==1.43.5
 PyJWT==1.7.1
 pyparsing==2.0.7
-pythonql3==0.9.61
 PyYAML==4.2b1
 rdflib==4.2.2
 rdflib-jsonld==0.4.0
