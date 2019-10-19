@@ -56,7 +56,6 @@ class QueryManager:
             if key_snake != key:
                 self.context[key_snake] = value
         self.context = {"@context": self.context}
-        glogger.debug(self.context)
 
     @staticmethod
     def insert_query(endpoint, request_args):
@@ -75,14 +74,21 @@ class QueryManager:
 
     @staticmethod
     def delete_query(endpoint, request_args):
-        query_string = f'DELETE WHERE {{ GRAPH <{request_args["g"]}> ' \
+        query_string = f'' \
+            f'DELETE WHERE {{ GRAPH <{request_args["g"]}> ' \
             f'{{ <{request_args["resource"]}> ?p ?o . }} }}'
-        sparql = SPARQLWrapper(endpoint)
-        sparql.setMethod(POST)
+
+        query_string_reverse = f'' \
+            f'DELETE WHERE {{ GRAPH <{request_args["g"]}> ' \
+            f'{{ ?s ?p <{request_args["resource"]}>  }} }}'
         try:
-            sparql.setQuery(query_string)
             glogger.info("deleting {}".format(request_args["resource"]))
             glogger.debug("deleting: {}".format(query_string))
+            glogger.debug("deleting: {}".format(query_string_reverse))
+
+            QueryManager.execute_query(endpoint, query_string)
+            QueryManager.execute_query(endpoint, query_string_reverse)
+
         except Exception as e:
             glogger.error("Exception occurred", exc_info=True)
             return "Error delete query", 405, {}
@@ -134,7 +140,6 @@ class QueryManager:
         except Exception:
             glogger.error("json serialize failed", exc_info=True)
             return []
-        glogger.debug(triples)
         frame = self.context.copy()
         frame['@type'] = owl_class_uri
         triples['@context'] = self.context.copy()

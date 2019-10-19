@@ -1,7 +1,11 @@
 import pathlib
 from setuptools import setup
 import codecs
-oba_version = '1.5.3'
+
+version = {}
+with open("VERSION") as fp:
+    exec(fp.read(), version)
+
 
 # The directory containing this file
 HERE = pathlib.Path(__file__).parent
@@ -22,7 +26,7 @@ with codecs.open('README.md', mode='r', encoding='utf-8') as f:
 # This call to setup() does all the work
 setup(
     name="obasparql",
-    version=oba_version,
+    version=version,
     description="OBA Sparql Manager",
     long_description=README,
     long_description_content_type="text/markdown",
