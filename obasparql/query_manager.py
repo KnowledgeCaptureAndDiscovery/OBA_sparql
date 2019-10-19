@@ -74,6 +74,8 @@ class QueryManager:
 
     @staticmethod
     def delete_query(endpoint, request_args):
+        sparql = SPARQLWrapper(endpoint)
+        sparql.setMethod(POST)
         query_string = f'' \
             f'DELETE WHERE {{ GRAPH <{request_args["g"]}> ' \
             f'{{ <{request_args["resource"]}> ?p ?o . }} }}'
@@ -86,8 +88,8 @@ class QueryManager:
             glogger.debug("deleting: {}".format(query_string))
             glogger.debug("deleting: {}".format(query_string_reverse))
 
-            QueryManager.execute_query(endpoint, query_string)
-            QueryManager.execute_query(endpoint, query_string_reverse)
+            sparql.setQuery(query_string)
+            sparql.setQuery(query_string_reverse)
 
         except Exception as e:
             glogger.error("Exception occurred", exc_info=True)
