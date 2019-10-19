@@ -1,10 +1,9 @@
 {
   "git": {
     "changelog": "git log --pretty=format:\"* %s (%h)\" ${latestTag}...HEAD",
-    "requireCleanWorkingDir": true,
+    "requireCleanWorkingDir": false,
     "requireUpstream": true,
-    "requireCommits": false,
-    "addUntrackedFiles": false,
+    "addUntrackedFiles": true,
     "commit": true,
     "commitMessage": "Release ${version}",
     "commitArgs": "",
