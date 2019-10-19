@@ -19,7 +19,7 @@
     "release": true
   },
   "hooks": {
-    "before:release": "echo ${version} > VERSION"
+    "after:bump": "echo ${version} > VERSION"
   }
 }
 
