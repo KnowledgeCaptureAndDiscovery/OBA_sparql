@@ -73,7 +73,6 @@ class QueryManager:
             return False
         return True
 
-    @staticmethod
     def delete_query(endpoint, request_args):
         sparql = SPARQLWrapper(endpoint)
         sparql.setMethod(POST)
@@ -81,24 +80,30 @@ class QueryManager:
             f'DELETE WHERE {{ GRAPH <{request_args["g"]}> ' \
             f'{{ <{request_args["resource"]}> ?p ?o . }} }}'
 
-        query_string_reverse = f'' \
-            f'DELETE WHERE {{ GRAPH <{request_args["g"]}> ' \
-            f'{{ ?s ?p <{request_args["resource"]}>  }} }}'
         try:
             glogger.info("deleting {}".format(request_args["resource"]))
             glogger.debug("deleting: {}".format(query_string))
-            glogger.debug("deleting: {}".format(query_string_reverse))
-
             sparql.setQuery(query_string)
             sparql.query()
-
-            sparql.setQuery(query_string_reverse)
-            sparql.query()
-
         except Exception as e:
             glogger.error("Exception occurred", exc_info=True)
             return "Error delete query", 405, {}
+
+        if request_args["delete_incoming_relations"]:
+            query_string_reverse = f'' \
+                                   f'DELETE WHERE {{ GRAPH <{request_args["g"]}> ' \
+                                   f'{{ ?s ?p <{request_args["resource"]}>  }} }}'
+            try:
+                glogger.info("deleting incoming relations {}".format(request_args["resource"]))
+                glogger.debug("deleting: {}".format(query_string_reverse))
+                sparql.setQuery(query_string_reverse)
+                sparql.query()
+            except Exception as e:
+                glogger.error("Exception occurred", exc_info=True)
+                return "Error delete query", 405, {}
+
         return "Deleted", 202, {}
+
 
     def obtain_query(self, owl_class_name, owl_class_uri, query_type, endpoint, request_args=None, formData=None, auth={}):
         """
