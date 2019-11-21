@@ -73,6 +73,7 @@ class QueryManager:
             return False
         return True
 
+    @staticmethod
     def delete_query(endpoint, request_args):
         sparql = SPARQLWrapper(endpoint)
         sparql.setMethod(POST)
