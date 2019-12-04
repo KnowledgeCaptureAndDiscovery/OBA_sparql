@@ -4,3 +4,9 @@ mime_types = {
     'html': 'text/html; q=1.0, */*; q=0.1',
     'ttl': 'text/turtle'
 }
+GET_ALL_QUERY = "get_all"
+GET_ALL_RELATED_QUERY = "get_all_related"
+GET_ALL_RELATED_USER_QUERY = "get_all_related_user"
+GET_ALL_USER_QUERY = "get_all_user"
+GET_ONE_QUERY = "get_one"
+GET_ONE_USER_QUERY = "get_one_user"

@@ -10,10 +10,11 @@ from grlc import gquery
 from SPARQLWrapper import SPARQLWrapper, POST
 import re
 
+from test.settings import GRAPH_BASE
 from .static import mime_types
 
 glogger = logging.getLogger(__name__)
-glogger.setLevel(logging.DEBUG)
+glogger.setLevel(logging.INFO)
 
 
 
@@ -41,12 +42,14 @@ class QueryManager:
 
         # Overwrite default queries by class
         for owl_class in os.listdir(queries_dir):
-            queries = self.read_template(queries_dir / owl_class)
-            setattr(self, owl_class, self._default_)
-            for key, value in queries.items():
-                k = getattr(self, owl_class)
-                k[key] = queries[key]
-
+           queries = self.read_template(queries_dir / owl_class)
+           setattr(self, owl_class, self._default_)
+           for key, value in queries.items():
+               k = getattr(self, owl_class)
+               k[key] = queries[key]
+        for query_name, query_sparql in queries.items():
+            glogger.debug(query_name)
+            glogger.debug(query_sparql)
         # Fix: oba needs key as camelcase and snake_case
         temp_context = json.loads(self.read_context(context_dir / "context.json"))["@context"]
         self.context = temp_context.copy()
@@ -59,7 +62,7 @@ class QueryManager:
 
     @staticmethod
     def insert_query(endpoint, request_args):
-        query_string = f'{request_args["prefixes"]}  ' \
+        query_string = f'{request_args["prefixes"]}' \
             f'INSERT DATA {{ GRAPH <{request_args["g"]}> ' \
             f'{{ {request_args["triples"]} }} }}'
         sparql = SPARQLWrapper(endpoint)
@@ -106,14 +109,14 @@ class QueryManager:
         return "Deleted", 202, {}
 
 
-    def obtain_query(self, owl_class_name, owl_class_uri, query_type, endpoint, request_args=None, formData=None, auth={}):
+    def obtain_query(self, query_directory, owl_class_uri, query_type, endpoint, request_args=None, formData=None, auth={}):
         """
         Given the owl_class and query_type, load the query template.
         Execute the query on the remote endpoint.
         :param formData:
         :type formData:
-        :param owl_class_name:
-        :type owl_class_name:
+        :param query_directory:
+        :type query_directory:
         :param query_type: The type of query. Required to load the query template.
         :type query_type: string
         :param endpoint: The url of the SPARQL endpoint
@@ -123,7 +126,7 @@ class QueryManager:
         :return: Framed JSON
         :rtype: string
         """
-        query_template = getattr(self, owl_class_name)[query_type]
+        query_template = getattr(self, query_directory)[query_type]
         resp, status, headers = dispatchSPARQLQuery(raw_sparql_query=query_template,
                                                     loader=None,
                                                     requestArgs=request_args,
@@ -160,6 +163,7 @@ class QueryManager:
             return framed['@graph']
         else:
             return []
+
 
     @staticmethod
     def read_context(context_file):

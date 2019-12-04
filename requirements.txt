@@ -17,13 +17,13 @@ itsdangerous==1.1.0
 Jinja2==2.10.3
 keepalive==0.5
 MarkupSafe==0.23
-obasparql==1.5.10
 ply==3.11
 pyaml==18.11.0
 PyGithub==1.43.5
 PyJWT==1.7.1
 pyparsing==2.0.7
 PyYAML==4.2b1
+PyLD==1.0.5
 rdflib==4.2.2
 rdflib-jsonld==0.4.0
 requests==2.20.0
