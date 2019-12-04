@@ -10,7 +10,6 @@ from grlc import gquery
 from SPARQLWrapper import SPARQLWrapper, POST
 import re
 
-from test.settings import GRAPH_BASE
 from .static import mime_types
 
 glogger = logging.getLogger(__name__)
