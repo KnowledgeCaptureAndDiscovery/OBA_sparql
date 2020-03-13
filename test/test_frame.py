@@ -14,6 +14,8 @@ from test.settings import QUERY_DIRECTORY, CONTEXT_DIRECTORY, QUERIES_TYPES
 from obasparql.query_manager import dispatchSPARQLQuery
 
 class TestFrame(unittest.TestCase):
+    logger = logging.getLogger('testing')
+
     @staticmethod
     def generate_graph(username):
         return "{}{}".format(GRAPH_BASE, username)
@@ -39,7 +41,6 @@ class TestFrame(unittest.TestCase):
         Returns:
 
         """
-        p = Path(__file__).parent / "inputs"
         owl_class_name = "Model"
         owl_class_uri = "https://w3id.org/okn/o/sdm#Model"
         resource_uri = "https://w3id.org/okn/i/mint/CYCLES"
@@ -56,7 +57,7 @@ class TestFrame(unittest.TestCase):
                                               endpoint=ENDPOINT,
                                               request_args=request_args)
         self.assertTrue(response)
-        logging.error(response)
+        self.logger.debug(response)
         for author in response[0]["author"]:
             self.assertIsInstance(author, dict)
         for author in response[0]["hasContactPerson"]:

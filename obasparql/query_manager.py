@@ -1,6 +1,5 @@
 import json
 import os
-import logging
 from pathlib import Path
 
 import requests
@@ -9,16 +8,16 @@ from rdflib import Graph
 from grlc import gquery
 from SPARQLWrapper import SPARQLWrapper, POST
 import re
-
+import logging
+import logging.config
 from .static import mime_types
 
 EMBED_OPTION = "@always"
 
-glogger = logging.getLogger(__name__)
-glogger.setLevel(logging.INFO)
-
-
-
+logging_file = Path(__file__).parent.parent / "logging_config.ini"
+logging.config.fileConfig(logging_file)
+glogger = logging.getLogger("grlc")
+logger = logging.getLogger('oba')
 
 def convert_snake(name):
     s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
@@ -32,6 +31,7 @@ class QueryManager:
         :param kwargs: contains the queries and context directories
         :type kwargs: dict
         """
+        logger.debug("setting contexts")
         self.kwargs = kwargs
         queries_dir = Path(kwargs["queries_dir"])
         context_dir = Path(kwargs["context_dir"])
@@ -137,7 +137,7 @@ class QueryManager:
                                                     requestUrl=None,
                                                     endpoint=endpoint,
                                                     auth=auth)
-        glogger.debug("response: {}".format(resp))
+        logger.debug("response: {}".format(resp))
         return self.frame_results(resp, owl_class_uri)
 
     def frame_results(self, resp, owl_class_uri):
@@ -231,6 +231,8 @@ def dispatchSPARQLQuery(raw_sparql_query, loader, requestArgs, acceptHeader, con
             glogger.debug("Local RDF graph loaded successfully with {} triples".format(len(g)))
         except Exception as e:
             glogger.error(e)
+        logger.info(rewritten_query)
+
         results = g.query(rewritten_query, result='sparql')
         # Prepare return format as requested
         resp_string = ""
@@ -251,7 +253,7 @@ def dispatchSPARQLQuery(raw_sparql_query, loader, requestArgs, acceptHeader, con
         # Rewrite INSERT
         rewritten_query = rewritten_query.replace("?_g_iri", "{}".format(formData.get('g')))
         rewritten_query = rewritten_query.replace("<s> <p> <o>", formData.get('data'))
-        glogger.debug("INSERT query rewritten as {}".format(rewritten_query))
+        logger.info("INSERT query rewritten as {}".format(rewritten_query))
 
         # Prepare HTTP POST request
         reqHeaders = {'Accept': acceptHeader, 'Content-Type': 'application/sparql-update'}
@@ -271,11 +273,13 @@ def dispatchSPARQLQuery(raw_sparql_query, loader, requestArgs, acceptHeader, con
             reqHeaders = {'Accept': mime_types[content]}
         data = {'query': rewritten_query}
 
-        glogger.debug('Sending HTTP request to SPARQL endpoint with params: {}'.format(data))
-        glogger.debug('Sending HTTP request to SPARQL endpoint with headers: {}'.format(reqHeaders))
-        glogger.debug('Sending HTTP request to SPARQL endpoint with auth: {}'.format(auth))
+        logger.info("Query \n {}".format(rewritten_query))
+
+        logger.debug('Sending HTTP request to SPARQL endpoint with params: {}'.format(data))
+        logger.debug('Sending HTTP request to SPARQL endpoint with headers: {}'.format(reqHeaders))
+        logger.debug('Sending HTTP request to SPARQL endpoint with auth: {}'.format(auth))
         response = requests.get(endpoint, params=data, headers=reqHeaders, auth=auth)
-        glogger.debug('Response header from endpoint: ' + response.headers['Content-Type'])
+        logger.debug('Response header from endpoint: ' + response.headers['Content-Type'])
 
         # Response headers
         resp = response.text
