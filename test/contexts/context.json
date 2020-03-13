@@ -69,13 +69,13 @@
       "@id": "https://w3id.org/okn/o/sdm#NumericalIndex"
     },
     "Organization": {
-      "@id": "http://schema.org/Organization"
+      "@id": "https://w3id.org/okn/o/sd#Organization"
     },
     "Parameter": {
       "@id": "https://w3id.org/okn/o/sd#Parameter"
     },
     "Person": {
-      "@id": "http://schema.org/Person"
+      "@id": "https://w3id.org/okn/o/sd#Person"
     },
     "Place": {
       "@id": "http://schema.org/Place"
@@ -171,7 +171,7 @@
     },
     "author": {
       "@container": "@set",
-      "@id": "http://schema.org/author",
+      "@id": "https://w3id.org/okn/o/sd#author",
       "@type": "@id"
     },
     "box": {
@@ -481,7 +481,7 @@
     },
     "hasPart": {
       "@container": "@set",
-      "@id": "https://w3id.org/okn/o/sdm#hasPart",
+      "@id": "https://w3id.org/okn/o/sd#hasPart",
       "@type": "@id"
     },
     "hasPresentation": {
@@ -554,6 +554,11 @@
       "@id": "https://w3id.org/okn/o/sd#hasStandardVariable",
       "@type": "@id"
     },
+    "hasStepSize": {
+      "@container": "@set",
+      "@id": "https://w3id.org/okn/o/sd#hasStepSize",
+      "@type": "http://www.w3.org/2001/XMLSchema#float"
+    },
     "hasSupportScriptLocation": {
       "@container": "@set",
       "@id": "https://w3id.org/okn/o/sd#hasSupportScriptLocation",
@@ -603,7 +608,7 @@
     },
     "keywords": {
       "@container": "@set",
-      "@id": "http://schema.org/keywords"
+      "@id": "https://w3id.org/okn/o/sd#keywords"
     },
     "label": {
       "@container": "@set",
@@ -742,7 +747,7 @@
     },
     "value": {
       "@container": "@set",
-      "@id": "http://www.w3.org/ns/prov#value"
+      "@id": "https://w3id.org/okn/o/sd#value"
     },
     "versionInfo": {
       "@container": "@set",

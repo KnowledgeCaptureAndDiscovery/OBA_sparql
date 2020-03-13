@@ -18,7 +18,7 @@ WHERE {
             SELECT DISTINCT ?item where {
                 ?item a ?_type_iri .
                 ?item ?prop ?desc .
-                VALUES ?prop { sd:description rdfs:label sd:keywords sdm:hasModelCategory}
+                VALUES ?prop { sd:description rdfs:label sd:keywords sdm:hasModelCategory }    
                 filter regex(str(?desc),?_text,"i")
             }
         }

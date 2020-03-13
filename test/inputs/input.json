@@ -1,0 +1,196 @@
+{
+    "@graph": [
+        {
+            "@id": "http://www.geoscienceontology.org/svo/svl/variable#crop_production__seasonal_production_index",
+            "@type": [
+                "http://www.geoscienceontology.org/svo/svu#Variable",
+                "http://www.w3.org/2002/07/owl#NamedIndividual"
+            ],
+            "label": "crop__seasonal_production_index"
+        },
+        {
+            "@id": "https://w3id.org/okn/i/mint/CYCLES",
+            "@type": [
+                "https://w3id.org/okn/o/sdm#Model",
+                "https://w3id.org/okn/o/sdm#Theory-GuidedModel"
+            ],
+            "label": "Cycles",
+            "author": [
+                "https://w3id.org/okn/i/mint/white_charlie",
+                "https://w3id.org/okn/i/mint/shi_yuning",
+                "https://w3id.org/okn/i/mint/kemanian_armen",
+                "https://w3id.org/okn/i/mint/stockle_claudio"
+            ],
+            "dateCreated": "2016",
+            "description": "Cycles simulates the productivity and the water,carbon and nitrogen balance of soil-crop systems subject to climate conditions and a large array of management constraints. Overall the model is set up to be daily. Some processes such as water balance are temporally nested (subdaily)\n.",
+            "hasAssumption": "The simulation unit in Cycles is a field with a single soil (soil file) that is layered (user defined number of layers) exposed to a daily weather (weather file) and subject to operations (operations file) that control soil properties; vegetation properties (crop file) and surface residue properties.; \nVariables in weather file are considered rigid forcings. Surface conditions do not alter air temperature or moisture. Soil is connected to the residues, aboveground living biomass, air, and radiation from the atmosphere, and with the bottom of the profile. There is no lateral water or solutes movement within the soil profile. When running stand alone, runoff and percolation water simply leaves the simulation unit. Vegetation can be composed of monocultures (single species) or multiple species. The parameters describing each plant of the community are described in the crop file. The operations file allows multiple types of interventions organized as tillage, fertilization, and planting events. Operations like kill crop are part of tillage.; \nTo enable coupling with other models, Cycles can be set to replace (re-initialize) internally calculated variable with external inputs. For example, infiltration can be an input from the PIHM model, soil moisture can be reset based on observations or data from other models. This flexibility extends to all state variables. Re-initialization algorithm can break the mass balance and is not recommended unless the goal overrides mass or energy balance concerns. Overall the model is set up to be daily. Some processes such as water balance are temporally nested (subdaily)\n",
+            "hasContactPerson": "https://w3id.org/okn/i/mint/kemanian_armen",
+            "hasDocumentation": "https://plantscience.psu.edu/research/labs/kemanian/models-and-tools/cycles",
+            "hasDownloadURL": "https://github.com/PSUmodeling/Cycles",
+            "hasExample": "#### Below is an illustrative example on how to use Cycles.\n---\nGeneral instructions: When using the Cycles AgroEcosystems Model in any region, you should follow the steps indicated below :\n\n1) Find your field location using a map. Cycles is a point-based model, and you will need information about the soil and weather for the point being simulated.\n\n2) [Expert users/modelers] Check the default control properties. These can be found in the Cycles control file. In the MINT configuration of Cycles, this file is not exposed, but can be found by downloading the component and looking at the technical details.\n \n3) Check the soil values for the chosen location (by default Cyles uses [GSSURGO](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/home/?cid=nrcs142p2_053628)) properties from your field location.\n \n4)  Select the weather location (by default Cycles tries to use the closest GLDAS grid) for your field location. A python script is used to read GLDAS netCDF4 files, aggregate subdaily GLDAS forcing data to daily resolution, and output the daily variables in text format to be used by Cycles.\n \n5) **[Expert users/modelers]** Create operations for your field location using the Operation Panel and/or Timeline. In the MINT configuration of Cycles, this file is not exposed, but can be found by downloading the component and looking at the technical details.\n\n6) Inspect/visualize model results.\n\n\n**Scenario**: In our case we want to calculate the Seasonal Crop Production Index for the Pongo basin in South Sudan, because it provides a fast and robust way of reporting normalized yields for a given grid point or region. The goal of the index is to easily segment \u201cyears\u201d or \u201cseasons\u201d that can be problematic for food production, and to provide an intuitive sense of the magnitude of the problem. The raw yield outputs might be difficult to interpret for non-experts, and index is more transparent.\n\nThe Seasonal Crop Production Index is based on the ratio of the yield of a given combination of planting date, fertilization and weed pressure to the median yield under such conditions across years:\n \n * An index = 1 means that the year resembles the median years, and it is assumed that it represents a neutral condition (neither local excess or shortage of food supply). \n * An index > 1 means that the local food supply may exceed the median, and the larger the number the better off the location. The caveat here is that flooding damage might be underestimated. As we refine our simulations this limitation will be lifted.\n * An index < 1 means a situation worse than normal, and the lower the value the worse the situation. It is safe to assume that this is a reliable indicator of local food shortage.\n\n**Data sources**:When attempting to follow the steps indicated above, the most difficult challenge is finding weather and soil files for our target region, as they are not available in GSSURGO or NLDAS. Therefore we selected the soils information from [USDA](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/tools/?cid=nrcseprd1407030), and [Global Land Data Assimilation System (GLDAS)](https://ldas.gsfc.nasa.gov/gldas) for the weather data. GLDAS has coarser temporal resolution than NLDAS, but has global coverage which is critical in our use case.\n\n**Results**: We executed Cycles in 209 locations we selected in the Pongo region, selecting \"Maize\" as our target crop and with multiple fertilization rates and weed fraction. Figure 1 shows the Variation of the Seasonal Crop Production Index for maize for one agricultural grid point in the Pongo Basin, after consolidating the results of each of the executions. The nitrogen rates represent from low to high fertilization (for the agronomy minded, 78 to 1250 kg/ha of raw fertilizer with 32% nitrogen). The 0.4 in the legend indicates the weed pressure (medium). The planting dates are not shown here, but an analyst can easily explore their impact by expanding the data selection. Clearly, years 2011, 2016 and 2017 in particular were problematic. \n\n![Fig1](https://files.mint.isi.edu/s/ez3Q7C7HhiBY52I/download)\n\n**Figure 1:  Variation of the Seasonal Crop Production Index for maize for one agricultural grid point in the Pongo Basin.**\n\n---\nFor more information on using Cycles, please see https://www.cycles-model.psu.edu/Cycles/CyclesModel.html.",
+            "hasFunding": "https://w3id.org/okn/i/mint/CYCLES_funding",
+            "hasInstallationInstructions": "http://psumodeling.github.io/Cycles/",
+            "hasPurpose": "crop seasonal production",
+            "hasVersion": [
+                "https://w3id.org/okn/i/mint/cycles_v0.9.3_alpha",
+                "https://w3id.org/okn/i/mint/cycles_v0.10.2_alpha",
+                "https://w3id.org/okn/i/mint/cycles_v0.9.4_alpha"
+            ],
+            "keywords": "Agriculture; crop yield; crop failure; weather; fertilizer; crop management",
+            "logo": "https://w3id.org/okn/i/mint/cycles_logo",
+            "operatingSystems": "Windows;Unix",
+            "publisher": "https://w3id.org/okn/i/mint/penn_state_university",
+            "website": "https://plantscience.psu.edu/research/labs/kemanian/models-and-tools/cycles",
+            "hasExplanationDiagram": "https://w3id.org/okn/i/mint/cycles_forrester",
+            "hasGrid": "https://w3id.org/okn/i/mint/cycles_grid",
+            "hasModelCategory": "Agriculture",
+            "usefulForCalculatingIndex": "http://www.geoscienceontology.org/svo/svl/variable#crop_production__seasonal_production_index"
+        },
+        {
+            "@id": "https://w3id.org/okn/i/mint/cycles_forrester",
+            "@type": "sd:Image",
+            "label": "Forrester diagram for Cycles"
+        },
+        {
+            "@id": "https://w3id.org/okn/i/mint/cycles_grid",
+            "@type": [
+                "https://w3id.org/okn/o/sdm#PointBasedGrid",
+                "https://w3id.org/okn/o/sdm#Grid"
+            ],
+            "label": "Grid from the Cycles agriculture model"
+        },
+        {
+            "@id": "https://w3id.org/okn/i/mint/cycles_logo",
+            "@type": "sd:Image",
+            "label": "Cycles logo"
+        },
+        {
+            "@id": "https://w3id.org/okn/i/mint/cycles_v0.10.2_alpha",
+            "@type": [
+                "sd:SoftwareVersion",
+                "https://w3id.org/okn/o/sdm#Theory-GuidedModel"
+            ],
+            "label": "Cycles v0.10.2-alpha"
+        },
+        {
+            "@id": "https://w3id.org/okn/i/mint/cycles_v0.9.3_alpha",
+            "@type": [
+                "sd:SoftwareVersion",
+                "https://w3id.org/okn/o/sdm#Theory-GuidedModel"
+            ],
+            "label": "Cycles v0.9.3 alpha"
+        },
+        {
+            "@id": "https://w3id.org/okn/i/mint/cycles_v0.9.4_alpha",
+            "@type": [
+                "sd:SoftwareVersion",
+                "https://w3id.org/okn/o/sdm#Theory-GuidedModel"
+            ],
+            "label": "Cycles v0.94-alpha"
+        },
+        {
+            "@id": "https://w3id.org/okn/i/mint/kemanian_armen",
+            "@type": "sd:Person",
+            "label": "Armen Kemanian"
+        },
+        {
+            "@id": "https://w3id.org/okn/i/mint/penn_state_university",
+            "@type": "sd:Organization",
+            "label": "The Pennsylvania State University"
+        },
+        {
+            "@id": "https://w3id.org/okn/i/mint/shi_yuning",
+            "@type": "sd:Person",
+            "label": "Yuning Shi"
+        },
+        {
+            "@id": "https://w3id.org/okn/i/mint/stockle_claudio",
+            "@type": "sd:Person",
+            "label": "Claudio O. Stockle"
+        },
+        {
+            "@id": "https://w3id.org/okn/i/mint/white_charlie",
+            "@type": "sd:Person",
+            "label": "Charlie M. White"
+        }
+    ],
+    "@context": {
+        "label": {
+            "@id": "http://www.w3.org/2000/01/rdf-schema#label"
+        },
+        "author": {
+            "@id": "https://w3id.org/okn/o/sd#author",
+            "@type": "@id"
+        },
+        "hasPurpose": {
+            "@id": "https://w3id.org/okn/o/sd#hasPurpose"
+        },
+        "hasContactPerson": {
+            "@id": "https://w3id.org/okn/o/sd#hasContactPerson",
+            "@type": "@id"
+        },
+        "publisher": {
+            "@id": "https://w3id.org/okn/o/sd#publisher",
+            "@type": "@id"
+        },
+        "hasGrid": {
+            "@id": "https://w3id.org/okn/o/sdm#hasGrid",
+            "@type": "@id"
+        },
+        "hasVersion": {
+            "@id": "https://w3id.org/okn/o/sd#hasVersion",
+            "@type": "@id"
+        },
+        "hasDocumentation": {
+            "@id": "https://w3id.org/okn/o/sd#hasDocumentation"
+        },
+        "keywords": {
+            "@id": "https://w3id.org/okn/o/sd#keywords"
+        },
+        "hasDownloadURL": {
+            "@id": "https://w3id.org/okn/o/sd#hasDownloadURL"
+        },
+        "hasFunding": {
+            "@id": "https://w3id.org/okn/o/sd#hasFunding",
+            "@type": "@id"
+        },
+        "hasAssumption": {
+            "@id": "https://w3id.org/okn/o/sd#hasAssumption"
+        },
+        "hasModelCategory": {
+            "@id": "https://w3id.org/okn/o/sdm#hasModelCategory"
+        },
+        "hasExample": {
+            "@id": "https://w3id.org/okn/o/sd#hasExample"
+        },
+        "logo": {
+            "@id": "https://w3id.org/okn/o/sd#logo",
+            "@type": "@id"
+        },
+        "hasInstallationInstructions": {
+            "@id": "https://w3id.org/okn/o/sd#hasInstallationInstructions"
+        },
+        "dateCreated": {
+            "@id": "https://w3id.org/okn/o/sd#dateCreated"
+        },
+        "hasExplanationDiagram": {
+            "@id": "https://w3id.org/okn/o/sdm#hasExplanationDiagram",
+            "@type": "@id"
+        },
+        "website": {
+            "@id": "https://w3id.org/okn/o/sd#website"
+        },
+        "operatingSystems": {
+            "@id": "https://w3id.org/okn/o/sd#operatingSystems"
+        },
+        "description": {
+            "@id": "https://w3id.org/okn/o/sd#description"
+        },
+        "usefulForCalculatingIndex": {
+            "@id": "https://w3id.org/okn/o/sdm#usefulForCalculatingIndex",
+            "@type": "@id"
+        },
+        "sd": "https://w3id.org/okn/o/sd#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#"
+    }
+}
