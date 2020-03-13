@@ -14,8 +14,6 @@ from .static import mime_types
 
 EMBED_OPTION = "@always"
 
-logging_file = Path(__file__).parent.parent / "logging_config.ini"
-logging.config.fileConfig(logging_file)
 glogger = logging.getLogger("grlc")
 logger = logging.getLogger('oba')
 
