@@ -12,7 +12,7 @@ import re
 
 from .static import mime_types
 
-EMBER_OPTION = "@last"
+EMBER_OPTION = "@always"
 
 glogger = logging.getLogger(__name__)
 glogger.setLevel(logging.INFO)
