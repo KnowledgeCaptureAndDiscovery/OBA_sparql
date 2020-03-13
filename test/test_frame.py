@@ -50,30 +50,17 @@ class TestFrame(unittest.TestCase):
             "resource": resource_uri,
             "g": self.username
         }
-
-        query_template = getattr(self.query_manager, owl_class_name)[query_type]
-        resp, status, headers = dispatchSPARQLQuery(raw_sparql_query=query_template,
-                                                    loader=None,
-                                                    requestArgs=request_args,
-                                                    acceptHeader="application/ld+json",
-                                                    content=None,
-                                                    formData=None,
-                                                    requestUrl=None,
-                                                    endpoint=ENDPOINT,
-                                                    auth=None)
-
-        frame = {"@context": self.query_manager.context.copy(), "@type": owl_class_uri}
-
-        resp_json = json.loads(resp)
-
-        logging.error(p / "input.json")
-        logging.error("====== PRINTING FRAME ======= ")
-        framed = jsonld.frame(resp_json, frame, {'embed':"@always"})
-        logging.error("====== PRINTING FRAMED ======= ")
-
-        self.write_json_to_file(resp_json, p / "input.json")
-        self.write_json_to_file(frame, p / "frame.json")
-        self.write_json_to_file(framed, p / "framed.json")
+        response = self.query_manager.obtain_query(query_directory=owl_class_name,
+                                              owl_class_uri=owl_class_uri,
+                                              query_type=query_type,
+                                              endpoint=ENDPOINT,
+                                              request_args=request_args)
+        self.assertTrue(response)
+        logging.error(response)
+        for author in response[0]["author"]:
+            self.assertIsInstance(author, dict)
+        for author in response[0]["hasContactPerson"]:
+            self.assertIsInstance(author, dict)
 
 if __name__ == '__main__':
     unittest.main()

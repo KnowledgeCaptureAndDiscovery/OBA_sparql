@@ -12,6 +12,8 @@ import re
 
 from .static import mime_types
 
+EMBER_OPTION = "@last"
+
 glogger = logging.getLogger(__name__)
 glogger.setLevel(logging.INFO)
 
@@ -157,7 +159,7 @@ class QueryManager:
         frame = self.context.copy()
         frame['@type'] = owl_class_uri
         triples['@context'] = self.context.copy()
-        framed = jsonld.frame(triples, frame)
+        framed = jsonld.frame(triples, frame, {"embed": ("%s" % EMBER_OPTION)})
         if '@graph' in framed:
             return framed['@graph']
         else:
