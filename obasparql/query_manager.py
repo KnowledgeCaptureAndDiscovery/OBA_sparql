@@ -136,9 +136,11 @@ class QueryManager:
                                                     endpoint=endpoint,
                                                     auth=auth)
         logger.debug("response: {}".format(resp))
+        if "resource" in request_args:
+            return self.frame_results(resp, owl_class_uri, request_args["resource"])
         return self.frame_results(resp, owl_class_uri)
 
-    def frame_results(self, resp, owl_class_uri):
+    def frame_results(self, resp, owl_class_uri, owl_resource_iri=None):
         """
         Generate the framed using the owl_class.
         Frame the response and returns it.
@@ -148,6 +150,9 @@ class QueryManager:
         :type owl_class: string
         :return: Framed JSON
         :rtype: string
+
+        Args:
+            owl_resource_iri:
         """
         try:
             triples = json.loads(resp)
@@ -157,6 +162,9 @@ class QueryManager:
         frame = self.context.copy()
         frame['@type'] = owl_class_uri
         triples['@context'] = self.context.copy()
+        if owl_resource_iri is not None:
+            frame['@id'] = owl_resource_iri
+
         framed = jsonld.frame(triples, frame, {"embed": ("%s" % EMBED_OPTION)})
         if '@graph' in framed:
             return framed['@graph']

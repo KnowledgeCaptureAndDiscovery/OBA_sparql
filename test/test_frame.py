@@ -1,11 +1,12 @@
 import json
-import logging
+import logging.config
 import unittest
 from pathlib import Path
 from typing import Dict
 from pyld import jsonld
 
 from obasparql.static import GET_ALL_USER_QUERY, GET_ONE_USER_QUERY
+from obasparql.utils import generate_graph
 from test.settings import GRAPH_BASE, ENDPOINT
 import unittest
 
@@ -13,12 +14,11 @@ from obasparql import QueryManager
 from test.settings import QUERY_DIRECTORY, CONTEXT_DIRECTORY, QUERIES_TYPES
 from obasparql.query_manager import dispatchSPARQLQuery
 
+MINT_USERNAME = generate_graph(GRAPH_BASE, "mint@isi.edu")
+
+
 class TestFrame(unittest.TestCase):
     logger = logging.getLogger('testing')
-
-    @staticmethod
-    def generate_graph(username):
-        return "{}{}".format(GRAPH_BASE, username)
 
     @staticmethod
     def write_json_to_file(data, filepath):
@@ -29,8 +29,6 @@ class TestFrame(unittest.TestCase):
         self.query_manager = QueryManager(queries_dir=QUERY_DIRECTORY,
                                           context_dir=CONTEXT_DIRECTORY,
                                           queries_types=QUERIES_TYPES)
-        username = "mint@isi.edu"
-        self.username = self.generate_graph(username)
 
     def test_frame_author(self):
         """
@@ -49,7 +47,7 @@ class TestFrame(unittest.TestCase):
         #grlc args
         request_args: Dict[str, str] = {
             "resource": resource_uri,
-            "g": self.username
+            "g": MINT_USERNAME
         }
         response = self.query_manager.obtain_query(query_directory=owl_class_name,
                                               owl_class_uri=owl_class_uri,
@@ -57,11 +55,11 @@ class TestFrame(unittest.TestCase):
                                               endpoint=ENDPOINT,
                                               request_args=request_args)
         self.assertTrue(response)
-        self.logger.debug(response)
         for author in response[0]["author"]:
             self.assertIsInstance(author, dict)
         for author in response[0]["hasContactPerson"]:
             self.assertIsInstance(author, dict)
+
 
 if __name__ == '__main__':
     unittest.main()
