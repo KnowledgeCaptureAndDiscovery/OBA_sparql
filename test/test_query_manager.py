@@ -65,6 +65,7 @@ class TestQueryManager(unittest.TestCase):
         logger.debug(resource)
         self.assertEqual(resource_uri, resource[0]["id"])
 
+
     def test_dispatchSPARQLQuery(self):
         """
         Testing to get the resource Travis
@@ -72,7 +73,7 @@ class TestQueryManager(unittest.TestCase):
         Returns:
         """
         owl_class_name = "Region"
-        owl_resource_iri = "https://w3id.org/okn/i/mint/Travis"
+        owl_resource_iri = "https://w3id.org/okn/i/mint/United_States"
         query_directory = owl_class_name
         query_type = GET_ONE_USER_QUERY
 
@@ -92,41 +93,7 @@ class TestQueryManager(unittest.TestCase):
                             formData=None,
                             requestUrl=None,
                             endpoint=endpoint)
-
-    #     def test_framed_get_all(self):
-    #         owl_class_uri = "https://w3id.org/okn/o/sdm#Region"
-    #         owl_resource_uri = "https://w3id.org/okn/i/mint/Travis"
-    #         response = '''{
-    #   "@graph" : [ {
-    #     "@id" : "https://w3id.org/okn/i/mint/Texas",
-    #     "@type" : "https://w3id.org/okn/o/sdm#Region",
-    #     "label" : "Texas (USA)"
-    #   }, {
-    #     "@id" : "https://w3id.org/okn/i/mint/Travis",
-    #     "@type" : "https://w3id.org/okn/o/sdm#Region",
-    #     "label" : "Travis",
-    #     "description" : "Travis (Texas)",
-    #     "partOf" : "https://w3id.org/okn/i/mint/Texas"
-    #   } ],
-    #   "@context" : {
-    #     "label" : {
-    #       "@id" : "http://www.w3.org/2000/01/rdf-schema#label"
-    #     },
-    #     "partOf" : {
-    #       "@id" : "https://w3id.org/okn/o/sdm#partOf",
-    #       "@type" : "@id"
-    #     },
-    #     "description" : {
-    #       "@id" : "https://w3id.org/okn/o/sd#description"
-    #     },
-    #     "sd" : "https://w3id.org/okn/o/sd#",
-    #     "rdfs" : "http://www.w3.org/2000/01/rdf-schema#"
-    #   }
-    # }'''
-    #
-    #         framed = self.query_manager.frame_results(response, owl_class_uri, owl_resource_uri)
-    #         logger.info(framed)
-    #         self.assertEqual(owl_resource_uri, framed[0]["id"])
+        logging.debug(resp)
 
     def test_framed_get_one(self):
         owl_class_uri = "https://w3id.org/okn/o/sdm#Region"
@@ -153,6 +120,34 @@ class TestQueryManager(unittest.TestCase):
     },
     "description" : {
       "@id" : "https://w3id.org/okn/o/sd#description"
+    },
+    "sd" : "https://w3id.org/okn/o/sd#",
+    "rdfs" : "http://www.w3.org/2000/01/rdf-schema#"
+  }
+}'''
+
+        framed = self.query_manager.frame_results(response, owl_class_uri, owl_resource_uri)
+        self.assertEqual(owl_resource_uri, framed[0]["id"])
+
+    def test_framed_get_one_reflexive(self):
+        owl_class_uri = "https://w3id.org/okn/o/sdm#Region"
+        owl_resource_uri = "https://w3id.org/okn/i/mint/United_States"
+        response = '''{
+  "@id" : "https://w3id.org/okn/i/mint/United_States",
+  "@type" : "https://w3id.org/okn/o/sdm#Region",
+  "label" : "United States of America",
+  "description" : "The United States of America (U.S.A. or USA), commonly known as the United States (U.S. or US) or America, is a country comprising 50 states, a federal district, five major self-governing territories, and various possessions. At 3.8 million square miles (9.8 million km2), the United States is the world's third or fourth largest country by total area and is slightly smaller than the entire continent of Europe. With a population of over 327 million people, the U.S. is the third most populous country. The capital is Washington, D.C., and the most populous city is New York City. Most of the country is located contiguously in North America between Canada and Mexico.",
+  "partOf" : "https://w3id.org/okn/i/mint/America",
+  "@context" : {
+    "partOf" : {
+      "@id" : "https://w3id.org/okn/o/sdm#partOf",
+      "@type" : "@id"
+    },
+    "description" : {
+      "@id" : "https://w3id.org/okn/o/sd#description"
+    },
+    "label" : {
+      "@id" : "http://www.w3.org/2000/01/rdf-schema#label"
     },
     "sd" : "https://w3id.org/okn/o/sd#",
     "rdfs" : "http://www.w3.org/2000/01/rdf-schema#"
