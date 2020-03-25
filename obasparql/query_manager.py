@@ -216,13 +216,20 @@ def dispatchSPARQLQuery(raw_sparql_query, loader, requestArgs, acceptHeader, con
 
     # Rewrite query using parameter values
     if query_metadata['type'] == 'SelectQuery' or query_metadata['type'] == 'ConstructQuery':
-        rewritten_query = gquery.rewrite_query(query_metadata['original_query'], query_metadata['parameters'],
-                                               requestArgs)
-
+        try:
+            rewritten_query = gquery.rewrite_query(query_metadata['original_query'], query_metadata['parameters'], requestArgs)
+        except Exception as e:
+            logger.error("Parameters expected: {} ".format(query_metadata['parameters'])
+            logger.error("Parameters given: {} ".format(requestArgs)
+            raise e
     # Rewrite query using pagination
     if query_metadata['type'] == 'SelectQuery' and 'pagination' in query_metadata:
-        rewritten_query = gquery.paginate_query(rewritten_query, query_metadata['pagination'], requestArgs)
-
+        try:
+            rewritten_query = gquery.paginate_query(rewritten_query, query_metadata['pagination'], requestArgs)
+        except Exception as e:
+            logger.error("Parameters expected: {} ".format(query_metadata['parameters'])
+            logger.error("Parameters given: {} ".format(requestArgs)
+            raise e
     resp = None
     headers = {}
 
