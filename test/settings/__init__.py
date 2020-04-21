@@ -21,12 +21,16 @@ config_fallbacks = {
     'query_dir': '',
     'context_dir': '',
 }
+
+
+### MODEL CATALOG
 config = ConfigParser(config_fallbacks)
 config.add_section('auth')
 config.add_section('defaults')
 config.add_section('local')
-config.read('config.ini')
-config_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config.ini')
+config_ini = 'config.ini'
+config.read(config_ini)
+config_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), config_ini)
 config.read(config_filename)
 
 # Default endpoint, if none specified elsewhere
@@ -49,6 +53,41 @@ mime_types = {
 
 UPDATE_ENDPOINT = f'{ENDPOINT}/update'
 QUERY_ENDPOINT = f'{ENDPOINT}/query'
+
+
+#### DBPEDIA
+config_dbpedia = ConfigParser(config_fallbacks)
+config_dbpedia.add_section('auth')
+config_dbpedia.add_section('defaults')
+config_dbpedia.add_section('local')
+config_ini = 'config_dbpedia.ini'
+config_dbpedia.read(config_ini)
+config_dbpedia_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), config_ini)
+config_dbpedia.read(config_dbpedia_filename)
+
+ENDPOINT_DBPEDIA = config_dbpedia.get('defaults', 'endpoint')
+ENDPOINT_USER_DBPEDIA = config_dbpedia.get('defaults', 'user')
+ENDPOINT_PASSWORD_DBPEDIA = config_dbpedia.get('defaults', 'password')
+PREFIX_DBPEDIA = config_dbpedia.get('defaults', 'prefix')
+GRAPH_BASE_DBPEDIA = config_dbpedia.get('defaults', 'graph_base')
+FIREBASE_KEY_DBPEDIA = config_dbpedia.get('defaults', 'firebase_key')
+
+QUERY_DIRECTORY_DBPEDIA = path/config_dbpedia.get('defaults', 'queries_dir')
+CONTEXT_DIRECTORY_DBPEDIA = path/config_dbpedia.get('defaults', 'context_dir')
+
+mime_types = {
+    'csv': 'text/csv; q=1.0, */*; q=0.1',
+    'json': 'application/json; q=1.0, application/sparql-results+json; q=0.8, */*; q=0.1',
+    'html': 'text/html; q=1.0, */*; q=0.1',
+    'ttl': 'text/turtle'
+}
+
+UPDATE_ENDPOINT = f'{ENDPOINT_DBPEDIA}/update'
+QUERY_ENDPOINT = f'{ENDPOINT_DBPEDIA}/query'
+
+
+
+
 
 QUERIES_TYPES = [GET_ALL_QUERY, GET_ALL_RELATED_QUERY, GET_ALL_RELATED_USER_QUERY, GET_ALL_USER_QUERY, GET_ONE_QUERY, GET_ONE_USER_QUERY]
 

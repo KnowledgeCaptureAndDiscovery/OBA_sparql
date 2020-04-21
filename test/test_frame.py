@@ -12,7 +12,7 @@ import unittest
 
 from obasparql import QueryManager
 from test.settings import QUERY_DIRECTORY, CONTEXT_DIRECTORY, QUERIES_TYPES
-from obasparql.query_manager import dispatchSPARQLQuery
+from obasparql.query_manager import dispatch_sparql_query
 
 MINT_USERNAME = generate_graph(GRAPH_BASE, "mint@isi.edu")
 

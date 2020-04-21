@@ -29,19 +29,19 @@ class TestSum(unittest.TestCase):
         owl_class_uri = "https://w3id.org/okn/o/sdm#ModelConfiguration"
         query_type = GET_ALL_USER_QUERY
 
-        #grlc args
         grlc_request_args: Dict[str, str] = {
             "type": owl_class_uri,
             "g": self.username
         }
 
 
-        self.query_manager.obtain_query(query_directory=owl_class_name,
+        results = self.query_manager.obtain_query(query_directory=owl_class_name,
                                         owl_class_uri=owl_class_uri,
                                         query_type=query_type,
                                         endpoint=ENDPOINT,
                                         request_args=grlc_request_args)
 
+        self.assertIsNotNone(results)
 
     def test_get_one(self):
         """
@@ -52,7 +52,6 @@ class TestSum(unittest.TestCase):
         resource_uri = "https://w3id.org/okn/i/mint/pihm-v2"
         query_type = GET_ONE_USER_QUERY
 
-        #grlc args
         request_args: Dict[str, str] = {
             "resource": resource_uri,
             "g": self.username
