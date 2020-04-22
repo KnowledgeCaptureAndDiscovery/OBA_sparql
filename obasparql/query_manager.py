@@ -2,15 +2,12 @@ import json
 import os
 from pathlib import Path
 
-import requests
 from SPARQLWrapper.SPARQLExceptions import EndPointInternalError, QueryBadFormed, Unauthorized, EndPointNotFound
 from pyld import jsonld
-from rdflib import Graph
-from grlc import gquery
 from SPARQLWrapper import SPARQLWrapper, POST, RDFXML, JSONLD
 import re
 import logging.config
-
+from obasparql import gquery
 EMBED_OPTION = "@always"
 
 glogger = logging.getLogger("grlc")
