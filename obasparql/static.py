@@ -12,3 +12,5 @@ GET_ALL_RELATED_USER_QUERY = "get_all_related_user"
 GET_ALL_USER_QUERY = "get_all_user"
 GET_ONE_QUERY = "get_one"
 GET_ONE_USER_QUERY = "get_one_user"
+
+XSD_DATATYPES = ["decimal", "float", "double", "integer", "positiveInteger", "negativeInteger", "nonPositiveInteger", "nonNegativeInteger", "long", "int", "short", "byte", "unsignedLong", "unsignedInt", "unsignedShort", "unsignedByte", "dateTime", "date", "gYearMonth", "gYear", "duration", "gMonthDay", "gDay", "gMonth", "string", "normalizedString", "token", "language", "NMTOKEN", "NMTOKENS", "Name", "NCName", "ID", "IDREFS", "ENTITY", "ENTITIES", "QName", "boolean", "hexBinary", "base64Binary", "anyURI", "notation"]
