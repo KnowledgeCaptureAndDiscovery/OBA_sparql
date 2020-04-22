@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 # gquery.py: functions that deal with / transform SPARQL queries in grlc
+# This code is from grlc
+# grlc, the git repository linked data API constructor, automatically builds Web APIs using SPARQL queries stored
+# in git repositories. http://grlc.io/
 
 import yaml
 import json
@@ -21,6 +24,7 @@ glogger = logging.getLogger(__name__)
 XSD_PREFIX = 'PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>'
 
 import SPARQLTransformer
+
 
 def count_query_results(query, endpoint):
     """
