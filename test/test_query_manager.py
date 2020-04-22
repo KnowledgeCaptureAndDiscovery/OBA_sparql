@@ -1,11 +1,14 @@
+import json
 import logging
 import unittest
 from typing import Dict
 
-from obasparql.query_manager import dispatchSPARQLQuery, QueryManager
-from obasparql.static import GET_ONE_USER_QUERY, GET_ALL_USER_QUERY
+from SPARQLWrapper import JSONLD
+
+from obasparql.query_manager import dispatch_sparql_query, QueryManager
+from obasparql.static import GET_ONE_USER_QUERY, GET_ALL_USER_QUERY, GET_ONE_QUERY
 from obasparql.utils import generate_graph
-from test.settings import QUERY_ENDPOINT, ENDPOINT, QUERY_DIRECTORY, CONTEXT_DIRECTORY, QUERIES_TYPES, GRAPH_BASE
+from test.settings import *
 
 logger = logging.getLogger('testing')
 MINT_USERNAME = generate_graph(GRAPH_BASE, "mint@isi.edu")
@@ -13,9 +16,35 @@ MINT_USERNAME = generate_graph(GRAPH_BASE, "mint@isi.edu")
 
 class TestQueryManager(unittest.TestCase):
     def setUp(self):
-        self.query_manager = QueryManager(queries_dir=QUERY_DIRECTORY,
-                                          context_dir=CONTEXT_DIRECTORY,
-                                          queries_types=QUERIES_TYPES)
+        self.query_manager_model_catalog = QueryManager(queries_dir=QUERY_DIRECTORY,
+                                                        context_dir=CONTEXT_DIRECTORY,
+                                                        queries_types=QUERIES_TYPES)
+
+        self.query_manager_dbpedia = QueryManager(queries_dir=QUERY_DIRECTORY_DBPEDIA,
+                                                  context_dir=CONTEXT_DIRECTORY_DBPEDIA,
+                                                  queries_types=QUERIES_TYPES)
+
+    def test_obtain_query_get_one(self):
+        """
+        Test to obtain one resource by the uri
+        """
+        owl_class_name = "Band"
+        owl_class_uri = "http://dbpedia.org/ontology/Band"
+        resource_uri = "http://dbpedia.org/resource/Indemnity_Act_1717"
+        query_type = GET_ONE_QUERY
+
+        # grlc args
+        request_args: Dict[str, str] = {
+            "resource": resource_uri,
+        }
+
+        resource = self.query_manager_dbpedia.obtain_query(query_directory=owl_class_name,
+                                                           owl_class_uri=owl_class_uri,
+                                                           query_type=query_type,
+                                                           endpoint=ENDPOINT_DBPEDIA,
+                                                           request_args=request_args)
+
+        self.assertTrue(resource)
 
     def test_obtain_query_get_one_user(self):
         """
@@ -26,20 +55,19 @@ class TestQueryManager(unittest.TestCase):
         resource_uri = "https://w3id.org/okn/i/mint/CYCLES"
         query_type = GET_ONE_USER_QUERY
 
-        #grlc args
+        # grlc args
         request_args: Dict[str, str] = {
             "resource": resource_uri,
             "g": MINT_USERNAME
         }
 
-        resource = self.query_manager.obtain_query(query_directory=owl_class_name,
-                                                   owl_class_uri=owl_class_uri,
-                                                   query_type=query_type,
-                                                   endpoint=ENDPOINT,
-                                                   request_args=request_args)
+        resource = self.query_manager_model_catalog.obtain_query(query_directory=owl_class_name,
+                                                                 owl_class_uri=owl_class_uri,
+                                                                 query_type=query_type,
+                                                                 endpoint=ENDPOINT,
+                                                                 request_args=request_args)
 
-        logger.debug(resource)
-        self.assertEqual(resource_uri, resource[0]["id"])
+        self.assertTrue(resource)
 
     def test_obtain_query_get_one_user_region_case(self):
         """
@@ -50,23 +78,44 @@ class TestQueryManager(unittest.TestCase):
         resource_uri = "https://w3id.org/okn/i/mint/Travis"
         query_type = GET_ONE_USER_QUERY
 
-        #grlc args
+        # grlc args
         request_args: Dict[str, str] = {
             "resource": resource_uri,
             "g": MINT_USERNAME
         }
 
-        resource = self.query_manager.obtain_query(query_directory=owl_class_name,
-                                                   owl_class_uri=owl_class_uri,
-                                                   query_type=query_type,
-                                                   endpoint=ENDPOINT,
-                                                   request_args=request_args)
+        resource = self.query_manager_model_catalog.obtain_query(query_directory=owl_class_name,
+                                                                 owl_class_uri=owl_class_uri,
+                                                                 query_type=query_type,
+                                                                 endpoint=ENDPOINT,
+                                                                 request_args=request_args)
 
-        logger.debug(resource)
         self.assertEqual(resource_uri, resource[0]["id"])
 
+    def test_dispatch_sparqlquery(self):
+        endpoint = "http://dbpedia.org/sparql"
+        query_template = '''
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    CONSTRUCT {
+        <http://dbpedia.org/resource/Indemnity_Act_1717> ?predicate ?prop .
+        ?prop a ?type .
+        ?prop rdfs:label ?label
+    }
+    WHERE {
+        <http://dbpedia.org/resource/Indemnity_Act_1717> ?predicate ?prop
+        OPTIONAL {
+            ?prop  a ?type
+            OPTIONAL {
+                ?prop rdfs:label ?label
+            }
+        }
+    }
+            '''
+        results = dispatch_sparql_query(raw_sparql_query=query_template, request_args={}, endpoint=endpoint,
+                                        return_format=JSONLD)
+        self.assertIsNotNone(json.loads(results))
 
-    def test_dispatchSPARQLQuery(self):
+    def test_dispatch_sparqlquery_model_catalog(self):
         """
         Testing to get the resource Travis
         Travis is a Region
@@ -83,17 +132,13 @@ class TestQueryManager(unittest.TestCase):
             "g": MINT_USERNAME
         }
 
-        query_template = getattr(self.query_manager, query_directory)[query_type]
+        query_template = getattr(self.query_manager_model_catalog, query_directory)[query_type]
 
-        resp, status, headers = dispatchSPARQLQuery(raw_sparql_query=query_template,
-                            loader=None,
-                            requestArgs=request_args,
-                            acceptHeader="application/ld+json",
-                            content=None,
-                            formData=None,
-                            requestUrl=None,
-                            endpoint=endpoint)
-        logging.debug(resp)
+        results = dispatch_sparql_query(raw_sparql_query=query_template,
+                                     request_args=request_args,
+                                     endpoint=endpoint,
+                                     return_format=JSONLD)
+        self.assertIsNotNone(json.loads(results))
 
     def test_framed_get_one(self):
         owl_class_uri = "https://w3id.org/okn/o/sdm#Region"
@@ -126,7 +171,7 @@ class TestQueryManager(unittest.TestCase):
   }
 }'''
 
-        framed = self.query_manager.frame_results(response, owl_class_uri, owl_resource_uri)
+        framed = self.query_manager_model_catalog.frame_results(response, owl_class_uri, owl_resource_uri)
         self.assertEqual(owl_resource_uri, framed[0]["id"])
 
     def test_framed_get_one_reflexive(self):
@@ -154,8 +199,9 @@ class TestQueryManager(unittest.TestCase):
   }
 }'''
 
-        framed = self.query_manager.frame_results(response, owl_class_uri, owl_resource_uri)
+        framed = self.query_manager_model_catalog.frame_results(response, owl_class_uri, owl_resource_uri)
         self.assertEqual(owl_resource_uri, framed[0]["id"])
+
 
 if __name__ == '__main__':
     unittest.main()
