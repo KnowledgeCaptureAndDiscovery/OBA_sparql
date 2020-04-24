@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 from typing import Dict
 
-from SPARQLWrapper import SPARQLWrapper, POST, JSONLD
+from SPARQLWrapper import SPARQLWrapper, POST, JSONLD, DIGEST
 from SPARQLWrapper.SPARQLExceptions import EndPointInternalError, QueryBadFormed, Unauthorized, EndPointNotFound
 from pyld import jsonld
 from rdflib import Graph
@@ -25,14 +25,15 @@ def convert_snake(name):
 
 
 class QueryManager:
-    def __init__(self, endpoint, graph_base, prefix, **kwargs):
+    def __init__(self, endpoint, graph_base, prefix, endpoint_username=None, endpoint_password=None, **kwargs):
         """
         Load the queries template from the directory
         :param kwargs: contains the queries and context directories
         :type kwargs: dict
         """
-        logger.debug("setting contexts")
         self.endpoint = endpoint
+        self.endpoint_username = endpoint_username
+        self.endpoint_password = endpoint_password
         self.update_endpoint = f'{self.endpoint}/update'
         self.query_endpoint = f'{self.endpoint}/query'
         self.graph_base = graph_base
@@ -312,6 +313,7 @@ class QueryManager:
                        f'INSERT DATA {{ GRAPH <{request_args["g"]}> ' \
                        f'{{ {request_args["triples"]} }} }}'
         sparql = SPARQLWrapper(self.update_endpoint)
+        self.set_authetication(sparql)
         sparql.setMethod(POST)
         try:
             sparql.setQuery(query_string)
@@ -322,8 +324,14 @@ class QueryManager:
             return False
         return True
 
+    def set_authetication(self, sparql):
+        sparql.setHTTPAuth(DIGEST)
+        if self.endpoint_username and self.endpoint_password:
+            sparql.setCredentials(self.endpoint_username, self.endpoint_password)
+
     def delete_query(self, request_args):
         sparql = SPARQLWrapper(self.update_endpoint)
+        self.set_authetication(sparql)
         sparql.setMethod(POST)
         query_string = f'' \
                        f'DELETE WHERE {{ GRAPH <{request_args["g"]}> ' \
