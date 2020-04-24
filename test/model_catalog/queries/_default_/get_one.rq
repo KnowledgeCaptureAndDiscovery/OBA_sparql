@@ -1,0 +1,18 @@
+#+ summary: Return the query to a resource by the resource_iri
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+CONSTRUCT {
+?_resource_iri ?predicate ?prop .
+?prop a ?type .
+?prop rdfs:label ?label
+}
+WHERE {
+    ?_resource_iri ?predicate ?prop
+    {
+        ?item ?predicate ?prop
+    }
+    OPTIONAL {
+        ?prop rdfs:label ?label ;
+            a ?type
+    }
+}

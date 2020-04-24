@@ -1,93 +1,20 @@
-
-from configparser import ConfigParser
-import os
 from pathlib import Path
-from obasparql.static import GET_ALL_QUERY, GET_ALL_RELATED_QUERY, GET_ALL_RELATED_USER_QUERY, GET_ALL_USER_QUERY, GET_ONE_QUERY, GET_ONE_USER_QUERY
 
+from obasparql.static import GET_ALL_QUERY, GET_ALL_RELATED_QUERY, GET_ALL_RELATED_USER_QUERY, GET_ALL_USER_QUERY, \
+    GET_ONE_QUERY, GET_ONE_USER_QUERY
 
 path = Path(__file__).parent.parent.parent
 
-# Setting headers to use access_token for the GitHub API
-config_fallbacks = {
-    'github_access_token': '',
-    'endpoint': '',
-    'user': '',
-    'password': '',
-    'server_name': '',
-    'prefix': '',
-    'graph_base': '',
-    'firebase_key': '',
-    'local_sparql_dir': '',
-    'query_dir': '',
-    'context_dir': '',
-}
+model_catalog_endpoint = "https://endpoint.mint.isi.edu/modelCatalog-1.3.0"
+model_catalog_graph_base = "http://ontosoft.isi.edu:3030/modelCatalog-1.3.0/data/"
+model_catalog_prefix = "https://w3id.org/okn/i/mint/"
+model_catalog_queries = path / "test/model_catalog/queries/"
+model_catalog_context = path / "test/model_catalog/contexts/"
 
+dbpedia_endpoint = "https://dbpedia.org/sparql"
+dbpedia_prefix = "http://dbpedia.org/resource"
+dbpedia_queries = path / "test/dbpedia/queries/"
+dbpedia_context = path / "test/dbpedia/contexts/"
 
-### MODEL CATALOG
-config = ConfigParser(config_fallbacks)
-config.add_section('auth')
-config.add_section('defaults')
-config.add_section('local')
-config_ini = 'config.ini'
-config.read(config_ini)
-config_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), config_ini)
-config.read(config_filename)
-
-# Default endpoint, if none specified elsewhere
-ENDPOINT = config.get('defaults', 'endpoint')
-ENDPOINT_USER = config.get('defaults', 'user')
-ENDPOINT_PASSWORD = config.get('defaults', 'password')
-PREFIX = config.get('defaults', 'prefix')
-GRAPH_BASE = config.get('defaults', 'graph_base')
-FIREBASE_KEY = config.get('defaults', 'firebase_key')
-
-QUERY_DIRECTORY = path/config.get('defaults', 'queries_dir')
-CONTEXT_DIRECTORY = path/config.get('defaults', 'context_dir')
-
-mime_types = {
-    'csv': 'text/csv; q=1.0, */*; q=0.1',
-    'json': 'application/json; q=1.0, application/sparql-results+json; q=0.8, */*; q=0.1',
-    'html': 'text/html; q=1.0, */*; q=0.1',
-    'ttl': 'text/turtle'
-}
-
-UPDATE_ENDPOINT = f'{ENDPOINT}/update'
-QUERY_ENDPOINT = f'{ENDPOINT}/query'
-
-
-#### DBPEDIA
-config_dbpedia = ConfigParser(config_fallbacks)
-config_dbpedia.add_section('auth')
-config_dbpedia.add_section('defaults')
-config_dbpedia.add_section('local')
-config_ini = 'config_dbpedia.ini'
-config_dbpedia.read(config_ini)
-config_dbpedia_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), config_ini)
-config_dbpedia.read(config_dbpedia_filename)
-
-ENDPOINT_DBPEDIA = config_dbpedia.get('defaults', 'endpoint')
-ENDPOINT_USER_DBPEDIA = config_dbpedia.get('defaults', 'user')
-ENDPOINT_PASSWORD_DBPEDIA = config_dbpedia.get('defaults', 'password')
-PREFIX_DBPEDIA = config_dbpedia.get('defaults', 'prefix')
-GRAPH_BASE_DBPEDIA = config_dbpedia.get('defaults', 'graph_base')
-FIREBASE_KEY_DBPEDIA = config_dbpedia.get('defaults', 'firebase_key')
-
-QUERY_DIRECTORY_DBPEDIA = path/config_dbpedia.get('defaults', 'queries_dir')
-CONTEXT_DIRECTORY_DBPEDIA = path/config_dbpedia.get('defaults', 'context_dir')
-
-mime_types = {
-    'csv': 'text/csv; q=1.0, */*; q=0.1',
-    'json': 'application/json; q=1.0, application/sparql-results+json; q=0.8, */*; q=0.1',
-    'html': 'text/html; q=1.0, */*; q=0.1',
-    'ttl': 'text/turtle'
-}
-
-UPDATE_ENDPOINT = f'{ENDPOINT_DBPEDIA}/update'
-QUERY_ENDPOINT = f'{ENDPOINT_DBPEDIA}/query'
-
-
-
-
-
-QUERIES_TYPES = [GET_ALL_QUERY, GET_ALL_RELATED_QUERY, GET_ALL_RELATED_USER_QUERY, GET_ALL_USER_QUERY, GET_ONE_QUERY, GET_ONE_USER_QUERY]
-
+QUERIES_TYPES = [GET_ALL_QUERY, GET_ALL_RELATED_QUERY, GET_ALL_RELATED_USER_QUERY, GET_ALL_USER_QUERY, GET_ONE_QUERY,
+                 GET_ONE_USER_QUERY]

@@ -1,20 +1,16 @@
 import json
 import logging.config
-import unittest
-from pathlib import Path
 from typing import Dict
-from pyld import jsonld
 
-from obasparql.static import GET_ALL_USER_QUERY, GET_ONE_USER_QUERY
+from obasparql.static import GET_ONE_USER_QUERY
 from obasparql.utils import generate_graph
-from test.settings import GRAPH_BASE, ENDPOINT
 import unittest
 
 from obasparql import QueryManager
-from test.settings import QUERY_DIRECTORY, CONTEXT_DIRECTORY, QUERIES_TYPES
-from obasparql.query_manager import dispatch_sparql_query
+from test.settings import QUERIES_TYPES
+from test.settings import *
 
-MINT_USERNAME = generate_graph(GRAPH_BASE, "mint@isi.edu")
+graph_user = generate_graph(model_catalog_graph_base, "mint@isi.edu")
 
 
 class TestFrame(unittest.TestCase):
@@ -26,9 +22,12 @@ class TestFrame(unittest.TestCase):
             json.dump(data, f, indent=4)
 
     def setUp(self):
-        self.query_manager = QueryManager(queries_dir=QUERY_DIRECTORY,
-                                          context_dir=CONTEXT_DIRECTORY,
-                                          queries_types=QUERIES_TYPES)
+        self.query_manager = QueryManager(queries_dir=model_catalog_queries,
+                                          context_dir=model_catalog_context,
+                                          queries_types=QUERIES_TYPES,
+                                          endpoint=model_catalog_endpoint,
+                                          graph_base=model_catalog_graph_base,
+                                          prefix=model_catalog_prefix)
 
     def test_frame_author(self):
         """
@@ -47,13 +46,10 @@ class TestFrame(unittest.TestCase):
         #grlc args
         request_args: Dict[str, str] = {
             "resource": resource_uri,
-            "g": MINT_USERNAME
+            "g": graph_user
         }
-        response = self.query_manager.obtain_query(query_directory=owl_class_name,
-                                              owl_class_uri=owl_class_uri,
-                                              query_type=query_type,
-                                              endpoint=ENDPOINT,
-                                              request_args=request_args)
+        response = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
+                                                   query_type=query_type, request_args=request_args)
         self.assertTrue(response)
         for author in response[0]["author"]:
             self.assertIsInstance(author, dict)

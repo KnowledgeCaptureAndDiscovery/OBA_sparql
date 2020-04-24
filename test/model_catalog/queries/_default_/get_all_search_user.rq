@@ -1,0 +1,24 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+CONSTRUCT {
+    ?item ?predicate ?prop .
+    ?prop a ?type
+}
+WHERE {
+    GRAPH ?_g_iri {
+        {
+            SELECT DISTINCT ?item where {
+                ?item a ?_type_iri .
+                ?item ?prop ?desc .
+                VALUES ?property { rdfs:label }
+                filter regex(str(?desc),?_text,"i")
+            }
+             LIMIT 100
+             OFFSET 0
+        }
+        ?item ?property ?desc.
+        OPTIONAL {
+            ?prop a ?type
+        }
+    }
+}

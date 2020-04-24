@@ -1,23 +1,26 @@
-import unittest
 from typing import Dict
 
 from obasparql.static import GET_ALL_USER_QUERY, GET_ONE_USER_QUERY
-from test.settings import GRAPH_BASE, ENDPOINT
 import unittest
 
 from obasparql import QueryManager
-from test.settings import QUERY_DIRECTORY, CONTEXT_DIRECTORY, QUERIES_TYPES
+from test.settings import QUERIES_TYPES, model_catalog_queries, model_catalog_context, model_catalog_endpoint, \
+    model_catalog_graph_base, model_catalog_prefix
 
 
-class TestSum(unittest.TestCase):
+class TestQuery(unittest.TestCase):
     @staticmethod
     def generate_graph(username):
-        return "{}{}".format(GRAPH_BASE, username)
+        return "{}{}".format(model_catalog_graph_base, username)
 
     def setUp(self):
-        self.query_manager = QueryManager(queries_dir=QUERY_DIRECTORY,
-                                          context_dir=CONTEXT_DIRECTORY,
-                                          queries_types=QUERIES_TYPES)
+        self.query_manager = QueryManager(queries_dir=model_catalog_queries,
+                                          context_dir=model_catalog_context,
+                                          queries_types=QUERIES_TYPES,
+                                          endpoint=model_catalog_endpoint,
+                                          graph_base=model_catalog_graph_base,
+                                          prefix=model_catalog_prefix)
+
         username = "mint@isi.edu"
         self.username = self.generate_graph(username)
 
@@ -29,19 +32,17 @@ class TestSum(unittest.TestCase):
         owl_class_uri = "https://w3id.org/okn/o/sdm#ModelConfiguration"
         query_type = GET_ALL_USER_QUERY
 
-        grlc_request_args: Dict[str, str] = {
+        grlc_request_args = {
             "type": owl_class_uri,
-            "g": self.username
+            "g": self.username,
+            "per_page": 2,
+            "page": 1
         }
 
+        results = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
+                                                  query_type=query_type, request_args=grlc_request_args)
 
-        results = self.query_manager.obtain_query(query_directory=owl_class_name,
-                                        owl_class_uri=owl_class_uri,
-                                        query_type=query_type,
-                                        endpoint=ENDPOINT,
-                                        request_args=grlc_request_args)
-
-        self.assertIsNotNone(results)
+        #self.assertLessEqual(len(results), 2)
 
     def test_get_one(self):
         """
@@ -57,11 +58,8 @@ class TestSum(unittest.TestCase):
             "g": self.username
         }
 
-        resource = self.query_manager.obtain_query(query_directory=owl_class_name,
-                                                   owl_class_uri=owl_class_uri,
-                                                   query_type=query_type,
-                                                   endpoint=ENDPOINT,
-                                                   request_args=request_args)
+        resource = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
+                                                   query_type=query_type, request_args=request_args)
         self.assertEqual(len(resource), 1)
         self.assertEqual(resource[0]["id"], resource_uri)
 
@@ -74,19 +72,17 @@ class TestSum(unittest.TestCase):
         resource_type_uri = "https://w3id.org/okn/o/sdm#ModelConfigurationSetup"
         query_type = "custom_modelconfigurationsetups"
 
-        #grlc args
+        # grlc args
         request_args: Dict[str, str] = {
             "resource": resource_uri,
             "g": self.username
         }
 
-        resource = self.query_manager.obtain_query(query_directory=owl_class_name,
-                                                   owl_class_uri=resource_type_uri,
-                                                   query_type=query_type,
-                                                   endpoint=ENDPOINT,
-                                                   request_args=request_args)
+        resource = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=resource_type_uri,
+                                                   query_type=query_type, request_args=request_args)
         self.assertEqual(len(resource), 1)
         self.assertEqual(resource[0]["id"], resource_uri)
+
 
 if __name__ == '__main__':
     unittest.main()

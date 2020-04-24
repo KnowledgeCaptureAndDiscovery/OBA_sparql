@@ -202,7 +202,7 @@ def get_enumeration_sparql(rq, v, endpoint, auth=None):
         glogger.debug("Codes subquery: {}".format(codes_subquery))
         glogger.debug(endpoint)
         codes_json = requests.get(endpoint, params={'query': codes_subquery},
-                                  headers={'Accept': static.mimetypes['json'],
+                                  headers={'Accept': static.mime_types['json'],
                                            'Authorization': 'token {}'.format(static.ACCESS_TOKEN)}, auth=auth).json()
         for code in codes_json['results']['bindings']:
             vcodes.append(list(code.values())[0]["value"])

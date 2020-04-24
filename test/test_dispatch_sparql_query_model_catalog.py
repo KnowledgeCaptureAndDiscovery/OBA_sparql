@@ -22,48 +22,6 @@ class TestQueryManager(unittest.TestCase):
                                           graph_base=model_catalog_graph_base,
                                           prefix=model_catalog_prefix)
 
-
-    def test_obtain_query_get_one_user(self):
-        """
-        Test to obtain one resource by the uri
-        """
-        owl_class_name = "Model"
-        owl_class_uri = "https://w3id.org/okn/o/sdm#Model"
-        resource_uri = "https://w3id.org/okn/i/mint/CYCLES"
-        query_type = GET_ONE_USER_QUERY
-
-        # grlc args
-        request_args: Dict[str, str] = {
-            "resource": resource_uri,
-            "g": graph_user
-        }
-
-        resource = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
-                                                   query_type=query_type, request_args=request_args)
-
-        self.assertTrue(resource)
-
-    def test_obtain_query_get_one_user_region_case(self):
-        """
-        Test to obtain one resource by the uri
-        """
-        owl_class_name = "Region"
-        owl_class_uri = "https://w3id.org/okn/o/sdm#Region"
-        resource_uri = "https://w3id.org/okn/i/mint/Travis"
-        query_type = GET_ONE_USER_QUERY
-
-        # grlc args
-        request_args: Dict[str, str] = {
-            "resource": resource_uri,
-            "g": graph_user
-        }
-
-        resource = self.query_manager.obtain_query(query_directory=owl_class_name,
-                                                                 owl_class_uri=owl_class_uri, query_type=query_type,
-                                                                 request_args=request_args)
-
-        self.assertEqual(resource_uri, resource[0]["id"])
-
     def test_dispatch_sparqlquery(self):
         endpoint = "http://dbpedia.org/sparql"
         query_template = '''
@@ -107,8 +65,8 @@ class TestQueryManager(unittest.TestCase):
         query_template = getattr(self.query_manager, query_directory)[query_type]
 
         results = self.query_manager.dispatch_sparql_query(raw_sparql_query=query_template,
-                                             request_args=request_args,
-                                             return_format=JSONLD)
+                                                           request_args=request_args,
+                                                           return_format=JSONLD)
         self.assertIsNotNone(json.loads(results))
 
     def test_framed_get_one(self):
