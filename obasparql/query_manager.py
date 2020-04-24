@@ -5,12 +5,14 @@ import re
 from pathlib import Path
 from typing import Dict
 
+import validators
 from SPARQLWrapper import SPARQLWrapper, POST, JSONLD, DIGEST
 from SPARQLWrapper.SPARQLExceptions import EndPointInternalError, QueryBadFormed, Unauthorized, EndPointNotFound
 from pyld import jsonld
 from rdflib import Graph
 
 from obasparql import gquery
+from obasparql.static import *
 from obasparql.utils import generate_new_uri, primitives
 
 EMBED_OPTION = "@always"
@@ -78,6 +80,10 @@ class QueryManager:
 
         # args
         request_args: Dict[str, str] = {}
+        if "page" in kwargs:
+            request_args["page"] = kwargs["page"]
+        if "per_page" in kwargs:
+            request_args["per_page"] = kwargs["per_page"]
 
         if "custom_query_name" in kwargs:
             query_type = kwargs["custom_query_name"]
@@ -110,16 +116,26 @@ class QueryManager:
         :param kwargs:
         :return:
         """
-        if "id" in kwargs:
-            return self.get_one_resource(request_args=request_args, query_type="get_one_user", **kwargs)
+        kls, owl_class_name, resource_type_uri, username = self.set_up(**kwargs)
+        if "id" in kwargs and "username" in kwargs:
+            return self.get_one_resource(request_args=request_args, query_type=GET_ONE_USER_QUERY, **kwargs)
+        elif "id" in kwargs and "username" not in kwargs:
+            return self.get_one_resource(request_args=request_args, query_type=GET_ONE_QUERY, **kwargs)
 
-        else:
-            query_type = "get_all_user"
+        elif "id" not in kwargs:
             if "label" in kwargs and kwargs["label"] is not None:
-                query_text = kwargs["label"]
-                query_type = "get_all_search_user"
-                request_args["text"] = query_text
-            return self.get_all_resource(request_args=request_args, query_type=query_type, **kwargs)
+                logging.warning("not supported")
+                # query_text = kwargs["label"]
+                # query_type = "get_all_search_user"
+                # request_args["text"] = query_text
+                # if "username" in kwargs:
+                #     return self.get_all_resource(request_args=request_args, query_type=query_type, **kwargs)
+                # elif "username" not in kwargs:
+                #     return self.get_all_resource(request_args=request_args, query_type=query_type, **kwargs)
+            if "username" in kwargs:
+                return self.get_all_resource(request_args=request_args, query_type=GET_ALL_USER_QUERY, **kwargs)
+            elif "username" not in kwargs:
+                return self.get_all_resource(request_args=request_args, query_type=GET_ALL_QUERY, **kwargs)
 
     def get_one_resource(self, request_args, query_type="get_one_user", **kwargs):
         """
@@ -289,7 +305,7 @@ class QueryManager:
     def generate_graph(self, username):
         return "{}{}".format(self.graph_base, username)
 
-    def build_instance_uri(self, uri, validators=None):
+    def build_instance_uri(self, uri):
         if validators.url(uri):
             return uri
         return "{}{}".format(self.prefix, uri)
@@ -517,7 +533,7 @@ class QueryManager:
         if "per_page" in request_args and "offset" in request_args:
             rewritten_query = rewritten_query.replace("LIMIT 100", "LIMIT {}".format(request_args["per_page"]))
             rewritten_query = rewritten_query.replace("OFFSET 0", "OFFSET {}".format(request_args["offset"]))
-
+        logger.info(rewritten_query)
         sparql = SPARQLWrapper(self.endpoint)
         sparql.setQuery(rewritten_query)
         sparql.setReturnFormat(return_format)
