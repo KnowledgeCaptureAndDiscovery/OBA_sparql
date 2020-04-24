@@ -42,7 +42,7 @@ class TestQuery(unittest.TestCase):
         results = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
                                                   query_type=query_type, request_args=grlc_request_args)
 
-        #self.assertLessEqual(len(results), 2)
+        self.assertLessEqual(len(results), 2)
 
     def test_get_one(self):
         """

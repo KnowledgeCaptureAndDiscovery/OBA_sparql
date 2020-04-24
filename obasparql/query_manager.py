@@ -514,7 +514,7 @@ class QueryManager:
                 logger.error("Parameters given: {} ".format(request_args))
                 raise e
         # Rewrite query using pagination
-        if "page" in request_args and "offset" in request_args:
+        if "per_page" in request_args and "offset" in request_args:
             rewritten_query = rewritten_query.replace("LIMIT 100", "LIMIT {}".format(request_args["per_page"]))
             rewritten_query = rewritten_query.replace("OFFSET 0", "OFFSET {}".format(request_args["offset"]))
 
