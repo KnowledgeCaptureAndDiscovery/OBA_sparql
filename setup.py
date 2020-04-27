@@ -45,4 +45,8 @@ setup(
     packages=["obasparql"],
     include_package_data=True,
     install_requires=install_requires,
+
+    dependency_links=[
+        'git+https://github.com/sirspock/sparqlwrapper.git@1.8.6#egg=SPARQLWrapper'
+    ]
 )
