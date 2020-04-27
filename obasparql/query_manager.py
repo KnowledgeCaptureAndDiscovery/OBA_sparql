@@ -171,26 +171,45 @@ class QueryManager:
         try:
             response = self.obtain_query(query_directory=owl_class_name, owl_class_uri=resource_type_uri,
                                          query_type=query_type, request_args=request_args)
-            if len(response) > 0:
-                return kls.from_dict(response[0])
-            else:
-                return "Not found", 404, {}
-
         except:
             logger.error("Exception occurred", exc_info=True)
             return "Bad request", 400, {}
+
+        if len(response) > 0:
+            try:
+                return kls.from_dict(response[0])
+            except ValueError as e:
+                raise e
+                logger.error(e, exc_info=True)
+            except Exception as e:
+                raise e
+                logger.error(e, exc_info=True)
+        else:
+            return "Not found", 404, {}
+
+
 
     def request_all(self, kls, owl_class_name, request_args, resource_type_uri, query_type="get_all_user"):
         try:
             response = self.obtain_query(query_directory=owl_class_name, owl_class_uri=resource_type_uri,
                                          query_type=query_type, request_args=request_args)
-            items = []
+        except Exception as e:
+            logger.error(e, exc_info=True)
+            return "Bad request error", 400, {}
+
+        items = []
+        try:
             for d in response:
                 items.append(kls.from_dict(d))
-            return items
-        except:
-            logger.error("Exception occurred", exc_info=True)
-            return "Bad request", 400, {}
+        except ValueError as e:
+            logger.error(e, exc_info=True)
+            return "Bad request error", 400, {}
+
+        except Exception as e:
+            logger.error(e, exc_info=True)
+            return "Internal server error", 500, {}
+
+        return items
 
     def put_resource(self, **kwargs):
         resource_uri = self.build_instance_uri(kwargs["id"])
@@ -433,6 +452,7 @@ class QueryManager:
                                                 return_format=JSONLD)
         except Exception as e:
             raise e
+
         logger.debug("response: {}".format(result))
         if "resource" in request_args:
             return self.frame_results(result, owl_class_uri, request_args["resource"])
@@ -453,18 +473,24 @@ class QueryManager:
             owl_resource_iri ():
         """
         try:
-            triples = json.loads(resp)
+            response_ld_with_context = json.loads(resp)
         except Exception:
             glogger.error("json serialize failed", exc_info=True)
             return []
-        frame = self.context.copy()
-        frame['@type'] = owl_class_uri
-        results = {"@graph": triples, "context": self.context.copy()}
+
+        frame = {"@context": response_ld_with_context["@context"], "@type": owl_class_uri}
 
         if owl_resource_iri is not None:
             frame['@id'] = owl_resource_iri
+        frame["@context"]["type"] = "@type"
+        frame["@context"]["id"] = "@id"
+        for property in frame["@context"].keys():
+            if isinstance(frame["@context"][property], dict):
+                frame["@context"][property]["@container"] = "@set"
 
-        framed = jsonld.frame(results, frame, {"embed": ("%s" % EMBED_OPTION)})
+        logger.info(json.dumps(response_ld_with_context["@graph"], indent=4))
+        logger.info(json.dumps(frame, indent=4))
+        framed = jsonld.frame(response_ld_with_context, frame, {"embed": ("%s" % EMBED_OPTION)})
         if '@graph' in framed:
             return framed['@graph']
         else:
@@ -538,7 +564,7 @@ class QueryManager:
         sparql.setQuery(rewritten_query)
         sparql.setReturnFormat(return_format)
         try:
-            return sparql.query().convert().serialize(format=return_format)
+            return sparql.query().response.read()
         except EndPointInternalError as e:
             logger.error(e, exc_info=True)
         except QueryBadFormed as e:

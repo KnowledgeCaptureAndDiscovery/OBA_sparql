@@ -148,12 +148,21 @@ class TestQueryManager(unittest.TestCase):
     def test_framed_get_one_reflexive(self):
         owl_class_uri = "https://w3id.org/okn/o/sdm#Region"
         owl_resource_uri = "https://w3id.org/okn/i/mint/United_States"
-        response = '''{
-  "@id" : "https://w3id.org/okn/i/mint/United_States",
-  "@type" : "https://w3id.org/okn/o/sdm#Region",
-  "label" : "United States of America",
-  "description" : "The United States of America (U.S.A. or USA), commonly known as the United States (U.S. or US) or America, is a country comprising 50 states, a federal district, five major self-governing territories, and various possessions. At 3.8 million square miles (9.8 million km2), the United States is the world's third or fourth largest country by total area and is slightly smaller than the entire continent of Europe. With a population of over 327 million people, the U.S. is the third most populous country. The capital is Washington, D.C., and the most populous city is New York City. Most of the country is located contiguously in North America between Canada and Mexico.",
-  "partOf" : "https://w3id.org/okn/i/mint/America",
+        response = '''
+{
+  "@graph" : [ {
+    "@id" : "https://w3id.org/okn/i/mint/America",
+    "@type" : "https://w3id.org/okn/o/sdm#Region"
+  }, {
+    "@id" : "https://w3id.org/okn/i/mint/United_States",
+    "@type" : "https://w3id.org/okn/o/sdm#Region",
+    "label" : "United States of America",
+    "description" : "The United States of America (U.S.A. or USA), commonly known as the United States (U.S. or US) or America, is a country comprising 50 states, a federal district, five major self-governing territories, and various possessions. At 3.8 million square miles (9.8 million km2), the United States is the world's third or fourth largest country by total area and is slightly smaller than the entire continent of Europe. With a population of over 327 million people, the U.S. is the third most populous country. The capital is Washington, D.C., and the most populous city is New York City. Most of the country is located contiguously in North America between Canada and Mexico.",
+    "partOf" : "https://w3id.org/okn/i/mint/America"
+  }, {
+    "@id" : "https://w3id.org/okn/o/sdm#Region",
+    "@type" : "http://www.w3.org/2002/07/owl#Class"
+  } ],
   "@context" : {
     "partOf" : {
       "@id" : "https://w3id.org/okn/o/sdm#partOf",
@@ -165,10 +174,10 @@ class TestQueryManager(unittest.TestCase):
     "label" : {
       "@id" : "http://www.w3.org/2000/01/rdf-schema#label"
     },
-    "sd" : "https://w3id.org/okn/o/sd#",
     "rdfs" : "http://www.w3.org/2000/01/rdf-schema#"
   }
-}'''
+}
+'''
 
         framed = self.query_manager.frame_results(response, owl_class_uri, owl_resource_uri)
         self.assertEqual(owl_resource_uri, framed[0]["id"])
