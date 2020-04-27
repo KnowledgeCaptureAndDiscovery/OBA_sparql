@@ -1,4 +1,5 @@
 validators
+sparqltransformer==1.6.10
 SPARQLWrapper @ git+https://github.com/sirspock/sparqlwrapper.git@1.8.6#egg=SPARQLWrapper
 pythonql3==0.9.61
 pyaml==18.11.0
@@ -7,7 +8,6 @@ rdflib==4.2.2
 requests>=2.20.0
 simplejson==3.16.0
 six==1.11.0
-sparqltransformer==1.6.10
 urllib3==1.24.3
 webencodings==0.5.1
 werkzeug>=0.15.3

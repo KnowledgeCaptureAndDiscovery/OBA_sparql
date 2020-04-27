@@ -23,7 +23,7 @@ class TestQuery(unittest.TestCase):
         """
         owl_class_name = "Band"
         owl_class_uri = "http://dbpedia.org/ontology/Band"
-        resource_uri = "http://dbpedia.org/resource/Indemnity_Act_1717"
+        resource_uri = "http://dbpedia.org/resource/Pink_Floyd"
         query_type = GET_ONE_QUERY
 
         # grlc args
