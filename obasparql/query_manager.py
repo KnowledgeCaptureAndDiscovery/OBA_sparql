@@ -478,7 +478,7 @@ class QueryManager:
             glogger.error("json serialize failed", exc_info=True)
             return []
 
-        frame = {"@context": response_ld_with_context["@context"], "@type": owl_class_uri}
+        frame = {"@context": response_ld_with_context["@context"].copy(), "@type": owl_class_uri}
 
         if owl_resource_iri is not None:
             frame['@id'] = owl_resource_iri
@@ -487,8 +487,10 @@ class QueryManager:
         for property in frame["@context"].keys():
             if isinstance(frame["@context"][property], dict):
                 frame["@context"][property]["@container"] = "@set"
+        if 'id' in response_ld_with_context["@graph"]:
+            del response_ld_with_context["@graph"]["id"]
 
-        logger.info(json.dumps(response_ld_with_context["@graph"], indent=4))
+        logger.debug(json.dumps(response_ld_with_context["@graph"], indent=4))
         logger.info(json.dumps(frame, indent=4))
         framed = jsonld.frame(response_ld_with_context, frame, {"embed": ("%s" % EMBED_OPTION)})
         if '@graph' in framed:
