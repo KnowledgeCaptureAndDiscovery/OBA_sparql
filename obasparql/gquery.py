@@ -400,7 +400,7 @@ def rewrite_query(query, parameters, get_args):
 
     if isinstance(query, dict):  # json query (sparql transformer)
         pass
-    
+
     if requireXSD and XSD_PREFIX not in query:
         query = query.replace('SELECT', XSD_PREFIX + '\n\nSELECT')
 

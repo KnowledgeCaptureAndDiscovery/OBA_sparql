@@ -18,7 +18,7 @@ with codecs.open('README.md', mode='r', encoding='utf-8') as f:
     long_description = f.read()
 
 install_requires = [
-    "validators",
+    "validators>=0.11.2",
     "SPARQLWrapper-mosorio==1.8.6",
     "pythonql3==0.9.61",
     "pyaml==18.11.0",
