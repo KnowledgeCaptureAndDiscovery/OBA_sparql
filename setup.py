@@ -14,11 +14,26 @@ HERE = pathlib.Path(__file__).parent
 README = (HERE / "README.md").read_text()
 
 
-with codecs.open('requirements.txt', mode='r') as f:
-    install_requires = f.read().splitlines()
-
 with codecs.open('README.md', mode='r', encoding='utf-8') as f:
     long_description = f.read()
+
+install_requires = [
+    "validators",
+    "SPARQLWrapper-mosorio==1.8.6",
+    "pythonql3==0.9.61",
+    "pyaml==18.11.0",
+    "rdflib-jsonld==0.4.0",
+    "rdflib==4.2.2",
+    "requests>=2.20.0",
+    "simplejson==3.16.0",
+    "six==1.11.0",
+    "urllib3==1.24.3",
+    "webencodings==0.5.1",
+    "werkzeug>=0.15.3",
+    "PyLD==1.0.5"
+
+]
+
 
 # This call to setup() does all the work
 setup(
@@ -45,7 +60,4 @@ setup(
     packages=["obasparql"],
     include_package_data=True,
     install_requires=install_requires,
-    dependency_links=[
-        'git+https://github.com/sirspock/sparqlwrapper.git@1.8.6#egg=SPARQLWrapper'
-    ]
 )

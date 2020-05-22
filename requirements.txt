@@ -1,5 +1,5 @@
 validators
-sparqltransformer==1.6.10
+sparqltransformer-mosorio==1.8.6
 pythonql3==0.9.61
 pyaml==18.11.0
 rdflib-jsonld==0.4.0
