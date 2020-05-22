@@ -5,8 +5,8 @@ from obasparql.static import GET_ALL_QUERY, GET_ALL_RELATED_QUERY, GET_ALL_RELAT
 
 path = Path(__file__).parent.parent.parent
 
-model_catalog_endpoint = "https://endpoint.mint.isi.edu/modelCatalog-1.3.0"
-model_catalog_graph_base = "http://ontosoft.isi.edu:3030/modelCatalog-1.3.0/data/"
+model_catalog_endpoint = "https://endpoint.mint.isi.edu/modelCatalog-1.4.0"
+model_catalog_graph_base = "http://endpoint.mint.isi.edu/modelCatalog-1.4.0/data/"
 model_catalog_prefix = "https://w3id.org/okn/i/mint/"
 model_catalog_queries = path / "test/model_catalog/queries/"
 model_catalog_context = path / "test/model_catalog/contexts/"

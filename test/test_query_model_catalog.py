@@ -1,7 +1,7 @@
 import logging
 from typing import Dict
 
-from obasparql.static import GET_ALL_USER_QUERY, GET_ONE_USER_QUERY
+from obasparql.static import *
 import unittest
 
 from obasparql import QueryManager
@@ -42,7 +42,26 @@ class TestQuery(unittest.TestCase):
 
         results = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
                                                   query_type=query_type, request_args=grlc_request_args)
-        #assert len(results) <= grlc_request_args["per_page"]
+        assert len(results) <= grlc_request_args["per_page"]
+
+    def test_get_all_label(self):
+        """
+        Test to obtain all the resources related to type
+        """
+        owl_class_name = "ModelConfiguration"
+        owl_class_uri = "https://w3id.org/okn/o/sdm#ModelConfiguration"
+        query_type = GET_ALL_USER_FILTER_QUERY
+
+        grlc_request_args = {
+            "type": owl_class_uri,
+            "g": self.username,
+            "text": "cycles"
+        }
+
+        results = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
+                                                  query_type=query_type, request_args=grlc_request_args)
+        print([i for i in results])
+        assert len(results)
 
     def test_get_one(self):
         """
