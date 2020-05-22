@@ -1,6 +1,6 @@
 from typing import Dict
 
-from obasparql.static import GET_ALL_USER_QUERY, GET_ONE_USER_QUERY, GET_ONE_QUERY
+from obasparql.static import GET_ONE_QUERY
 import unittest
 
 from obasparql import QueryManager

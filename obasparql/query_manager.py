@@ -80,13 +80,13 @@ class QueryManager:
 
         # args
         request_args: Dict[str, str] = {}
-        if "page" in kwargs:
-            request_args["page"] = kwargs["page"]
-        if "per_page" in kwargs:
-            request_args["per_page"] = kwargs["per_page"]
+        if PAGE_KEY in kwargs:
+            request_args[PAGE_KEY] = kwargs[PAGE_KEY]
+        if PER_PAGE_KEY in kwargs:
+            request_args[PER_PAGE_KEY] = kwargs[PER_PAGE_KEY]
 
-        if "custom_query_name" in kwargs:
-            query_type = kwargs["custom_query_name"]
+        if CUSTOM_QUERY_NAME_KEY in kwargs:
+            query_type = kwargs[CUSTOM_QUERY_NAME_KEY]
             return self.get_resource_custom(request_args=request_args, query_type=query_type, **kwargs)
         else:
             return self.get_resource_not_custom(request_args=request_args, **kwargs)
@@ -99,13 +99,12 @@ class QueryManager:
         :param kwargs:
         :return:
         """
-        if "id" in kwargs:
+        if ID_KEY in kwargs:
             return self.get_one_resource(request_args=request_args, query_type=query_type, **kwargs)
         else:
-
-            if "label" in kwargs and kwargs["label"] is not None:
-                query_text = kwargs["label"]
-                request_args["label"] = query_text
+            if LABEL_KEY in kwargs and kwargs[LABEL_KEY] is not None:
+                query_text = kwargs[LABEL_KEY]
+                request_args[LABEL_KEY] = query_text
             return self.get_all_resource(request_args=request_args, query_type=query_type, **kwargs)
 
     def get_resource_not_custom(self, request_args, **kwargs):
@@ -117,25 +116,23 @@ class QueryManager:
         :return:
         """
         kls, owl_class_name, resource_type_uri, username = self.set_up(**kwargs)
-        if "id" in kwargs and "username" in kwargs:
+        if ID_KEY in kwargs and USERNAME_KEY in kwargs:
             return self.get_one_resource(request_args=request_args, query_type=GET_ONE_USER_QUERY, **kwargs)
-        elif "id" in kwargs and "username" not in kwargs:
+        elif ID_KEY in kwargs and USERNAME_KEY not in kwargs:
             return self.get_one_resource(request_args=request_args, query_type=GET_ONE_QUERY, **kwargs)
 
-        elif "id" not in kwargs:
-            if "label" in kwargs and kwargs["label"] is not None:
-                logging.warning("not supported")
-                # query_text = kwargs["label"]
-                # query_type = "get_all_search_user"
-                # request_args["text"] = query_text
-                # if "username" in kwargs:
-                #     return self.get_all_resource(request_args=request_args, query_type=query_type, **kwargs)
-                # elif "username" not in kwargs:
-                #     return self.get_all_resource(request_args=request_args, query_type=query_type, **kwargs)
-            if "username" in kwargs:
-                return self.get_all_resource(request_args=request_args, query_type=GET_ALL_USER_QUERY, **kwargs)
-            elif "username" not in kwargs:
-                return self.get_all_resource(request_args=request_args, query_type=GET_ALL_QUERY, **kwargs)
+        elif ID_KEY not in kwargs:
+            if LABEL_KEY in kwargs and kwargs[LABEL_KEY] is not None:
+                request_args["text"] = kwargs[LABEL_KEY]
+                if USERNAME_KEY in kwargs and kwargs[USERNAME_KEY]:
+                    query_type = GET_ALL_USER_FILTER_QUERY
+                else:
+                    query_type = GET_ALL_QUERY
+            if USERNAME_KEY in kwargs and kwargs[USERNAME_KEY]:
+                query_type = GET_ALL_USER_QUERY
+            else:
+                query_type = GET_ALL_QUERY
+            return self.get_all_resource(request_args=request_args, query_type=query_type, **kwargs)
 
     def get_one_resource(self, request_args, query_type="get_one_user", **kwargs):
         """
@@ -148,7 +145,7 @@ class QueryManager:
         :rtype:
         """
         kls, owl_class_name, resource_type_uri, username = self.set_up(**kwargs)
-        request_args["resource"] = self.build_instance_uri(kwargs["id"])
+        request_args["resource"] = self.build_instance_uri(kwargs[ID_KEY])
         request_args["g"] = self.generate_graph(username)
         return self.request_one(kls, owl_class_name, request_args, resource_type_uri, query_type)
 
@@ -187,8 +184,6 @@ class QueryManager:
         else:
             return "Not found", 404, {}
 
-
-
     def request_all(self, kls, owl_class_name, request_args, resource_type_uri, query_type="get_all_user"):
         try:
             response = self.obtain_query(query_directory=owl_class_name, owl_class_uri=resource_type_uri,
@@ -212,7 +207,7 @@ class QueryManager:
         return items
 
     def put_resource(self, **kwargs):
-        resource_uri = self.build_instance_uri(kwargs["id"])
+        resource_uri = self.build_instance_uri(kwargs[ID_KEY])
         body = kwargs["body"]
         body.id = resource_uri
 
@@ -252,7 +247,7 @@ class QueryManager:
             return "Error inserting query", 407, {}
 
     def delete_resource(self, **kwargs):
-        resource_uri = self.build_instance_uri(kwargs["id"])
+        resource_uri = self.build_instance_uri(kwargs[ID_KEY])
         try:
             username = kwargs["user"]
         except Exception:
@@ -338,7 +333,7 @@ class QueryManager:
 
     def prepare_jsonld(self, resource):
         resource_dict = resource.to_dict()
-        resource_dict["id"] = self.build_instance_uri(resource_dict["id"])
+        resource_dict[ID_KEY] = self.build_instance_uri(resource_dict[ID_KEY])
         resource_dict['@context'] = self.context
         resource_json = json.dumps(resource_dict)
         return resource_json
@@ -444,8 +439,8 @@ class QueryManager:
             owl_class_uri ():
         """
         query_template = getattr(self, query_directory)[query_type]
-        if "page" in request_args and "per_page" in request_args:
-            request_args["offset"] = (request_args["page"] - 1) * request_args["per_page"]
+        if PAGE_KEY in request_args and PER_PAGE_KEY in request_args:
+            request_args["offset"] = (request_args[PAGE_KEY] - 1) * request_args[PER_PAGE_KEY]
         try:
             result = self.dispatch_sparql_query(raw_sparql_query=query_template,
                                                 request_args=request_args,
@@ -483,12 +478,12 @@ class QueryManager:
         if owl_resource_iri is not None:
             frame['@id'] = owl_resource_iri
         frame["@context"]["type"] = "@type"
-        frame["@context"]["id"] = "@id"
+        frame["@context"][ID_KEY] = "@id"
         for property in frame["@context"].keys():
             if isinstance(frame["@context"][property], dict):
                 frame["@context"][property]["@container"] = "@set"
         if 'id' in response_ld_with_context["@graph"]:
-            del response_ld_with_context["@graph"]["id"]
+            del response_ld_with_context["@graph"][ID_KEY]
 
         logger.debug(json.dumps(response_ld_with_context["@graph"], indent=4))
         logger.info(json.dumps(frame, indent=4))
@@ -536,8 +531,8 @@ class QueryManager:
 
     @staticmethod
     def set_up(**kwargs):
-        if "username" in kwargs:
-            username = kwargs["username"]
+        if USERNAME_KEY in kwargs:
+            username = kwargs[USERNAME_KEY]
         else:
             username = None
         owl_class_name = kwargs["rdf_type_name"]
@@ -558,8 +553,8 @@ class QueryManager:
                 logger.error("Parameters given: {} ".format(request_args))
                 raise e
         # Rewrite query using pagination
-        if "per_page" in request_args and "offset" in request_args:
-            rewritten_query = rewritten_query.replace("LIMIT 100", "LIMIT {}".format(request_args["per_page"]))
+        if PER_PAGE_KEY in request_args and "offset" in request_args:
+            rewritten_query = rewritten_query.replace("LIMIT 100", "LIMIT {}".format(request_args[PER_PAGE_KEY]))
             rewritten_query = rewritten_query.replace("OFFSET 0", "OFFSET {}".format(request_args["offset"]))
         logger.info(rewritten_query)
         sparql = SPARQLWrapper(self.endpoint)
