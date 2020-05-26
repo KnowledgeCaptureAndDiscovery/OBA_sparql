@@ -42,7 +42,7 @@ setup(
     packages=["obasparql"],
     include_package_data=True,
     install_requires=[
-        "validators==0.11.2",
+        "validators==0.15.0",
         "pythonql3==0.9.61",
         "pyaml==18.11.0",
         "rdflib-jsonld==0.4.0",
