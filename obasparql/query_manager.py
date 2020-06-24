@@ -477,8 +477,11 @@ class QueryManager:
         except Exception:
             glogger.error("json serialize failed", exc_info=True)
             return []
+        if len(response_ld_with_context) == 0 or '@graph' not in response_ld_with_context:
+            return []
+        new_context = response_ld_with_context["@context"].copy() if "@context" in response_ld_with_context else {}
 
-        frame = {"@context": response_ld_with_context["@context"].copy(), "@type": owl_class_uri}
+        frame = {"@context": new_context, "@type": owl_class_uri}
 
         if owl_resource_iri is not None:
             frame['@id'] = owl_resource_iri
