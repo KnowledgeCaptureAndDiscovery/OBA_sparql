@@ -477,8 +477,12 @@ class QueryManager:
         except Exception:
             glogger.error("json serialize failed", exc_info=True)
             return []
-        if len(response_ld_with_context) == 0 or '@graph' not in response_ld_with_context:
-            return []
+        if len(response_ld_with_context) == 0:
+            """
+            Fuseki sometimes return a json with graph and something not...
+            """
+            if "@id" in response_ld_with_context and '@graph' not in response_ld_with_context:
+                return []
         new_context = response_ld_with_context["@context"].copy() if "@context" in response_ld_with_context else {}
 
         frame = {"@context": new_context, "@type": owl_class_uri}
@@ -490,10 +494,11 @@ class QueryManager:
         for property in frame["@context"].keys():
             if isinstance(frame["@context"][property], dict):
                 frame["@context"][property]["@container"] = "@set"
-        if 'id' in response_ld_with_context["@graph"]:
+        if '@graph' in response_ld_with_context and 'id' in response_ld_with_context["@graph"]:
             del response_ld_with_context["@graph"]["id"]
 
-        logger.debug(json.dumps(response_ld_with_context["@graph"], indent=4))
+        if '@graph' in response_ld_with_context :
+            logger.debug(json.dumps(response_ld_with_context["@graph"], indent=4))
         logger.info(json.dumps(frame, indent=4))
         framed = jsonld.frame(response_ld_with_context, frame, {"embed": ("%s" % EMBED_OPTION)})
         if '@graph' in framed:
