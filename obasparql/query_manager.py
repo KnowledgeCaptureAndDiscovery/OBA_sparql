@@ -61,6 +61,14 @@ class QueryManager:
             glogger.debug(query_sparql)
         # Fix: oba needs key as camelcase and snake_case
         temp_context = json.loads(self.read_context(context_dir / "context.json"))["@context"]
+        tmp_context_class = json.loads(self.read_context(context_dir / "context_class.json"))["@context"]
+        try:
+            tmp_context_class.pop("id")
+            tmp_context_class.pop("type")
+        except KeyError:
+            print("Key not found")
+
+
         self.context = temp_context.copy()
         for key, value in temp_context.items():
             key_snake = convert_snake(key)
@@ -68,6 +76,7 @@ class QueryManager:
             if key_snake != key:
                 self.context[key_snake] = value
         self.context = {"@context": self.context}
+        self.class_context = tmp_context_class.copy()
 
     def get_resource(self, **kwargs):
         """
@@ -483,8 +492,8 @@ class QueryManager:
             """
             if "@id" in response_ld_with_context and '@graph' not in response_ld_with_context:
                 return []
-        new_context = response_ld_with_context["@context"].copy() if "@context" in response_ld_with_context else {}
-
+        endpoint_context = response_ld_with_context["@context"].copy() if "@context" in response_ld_with_context else {}
+        new_context = {**self.class_context, **endpoint_context}
         frame = {"@context": new_context, "@type": owl_class_uri}
 
         if owl_resource_iri is not None:
@@ -584,3 +593,8 @@ class QueryManager:
         except EndPointNotFound as e:
             logger.error(e, exc_info=True)
         raise Exception
+
+
+def merge(dict1, dict2):
+    res = {**dict1, **dict2}
+    return res
