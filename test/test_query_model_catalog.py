@@ -42,7 +42,23 @@ class TestQuery(unittest.TestCase):
 
         results = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
                                                   query_type=query_type, request_args=grlc_request_args)
-        #assert len(results) <= grlc_request_args["per_page"]
+
+    def test_get_all_with_pagination_dataset(self):
+        """
+        Test to obtain all the resources related to type
+        """
+        owl_class_name = "ModelConfiguration"
+        owl_class_uri = "https://w3id.org/okn/o/sd#DatasetSpecification"
+        query_type = GET_ALL_USER_QUERY
+
+        grlc_request_args = {
+            "type": owl_class_uri,
+            "g": self.username,
+        }
+
+        results = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
+                                                  query_type=query_type, request_args=grlc_request_args)
+
 
     def test_get_one(self):
         """
@@ -61,7 +77,9 @@ class TestQuery(unittest.TestCase):
         resource = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
                                                    query_type=query_type, request_args=request_args)
         self.assertEqual(len(resource), 1)
+        self.assertIn("ModelConfiguration", resource[0]['type'])
         self.assertEqual(resource[0]["id"], resource_uri)
+
 
     def test_get_one_setup_custom(self):
         """
