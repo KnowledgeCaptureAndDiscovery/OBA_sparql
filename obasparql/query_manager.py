@@ -524,8 +524,12 @@ class QueryManager:
         :return: Contents of the file
         :rtype: string
         """
-        with open(context_file, 'r') as reader:
-            return reader.read()
+        try:
+            with open(context_file, 'r') as reader:
+                return reader.read()
+        except FileNotFoundError as e:
+            logging.error(f"{context_file} missing")
+            exit(1)
 
     @staticmethod
     def read_template(owl_class_dir):
