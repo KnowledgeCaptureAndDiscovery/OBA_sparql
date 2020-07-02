@@ -255,7 +255,7 @@ class QueryManager:
             "triples": triples,
             "g": self.generate_graph(username)
         }
-        if self.insert_query(self.update_endpoint, request_args=request_args):
+        if self.insert_query(request_args=request_args):
             return body, 201, {}
         else:
             return "Error inserting query", 407, {}
