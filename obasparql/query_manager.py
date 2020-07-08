@@ -492,9 +492,16 @@ class QueryManager:
             """
             if "@id" in response_ld_with_context and '@graph' not in response_ld_with_context:
                 return []
+
+
         endpoint_context = response_ld_with_context["@context"].copy() if "@context" in response_ld_with_context else {}
+        hard_coding_model_catalog(endpoint_context)
         new_context = {**self.class_context, **endpoint_context}
+        new_response = {"@graph": jsonld.expand(response_ld_with_context),
+                        "@context": new_context}
+
         frame = {"@context": new_context, "@type": owl_class_uri}
+
 
         if owl_resource_iri is not None:
             frame['@id'] = owl_resource_iri
@@ -509,7 +516,7 @@ class QueryManager:
         if '@graph' in response_ld_with_context :
             logger.debug(json.dumps(response_ld_with_context["@graph"], indent=4))
         logger.info(json.dumps(frame, indent=4))
-        framed = jsonld.frame(response_ld_with_context, frame, {"embed": ("%s" % EMBED_OPTION)})
+        framed = jsonld.frame(new_response, frame, {"embed": ("%s" % EMBED_OPTION)})
         if '@graph' in framed:
             return framed['@graph']
         else:
@@ -598,6 +605,10 @@ class QueryManager:
             logger.error(e, exc_info=True)
         raise Exception
 
+def hard_coding_model_catalog(context):
+    for key, value in context.items():
+        if "@type" in value and "XMLSchema#" in value["@type"]:
+            del value["@type"]
 
 def merge(dict1, dict2):
     res = {**dict1, **dict2}
