@@ -1,0 +1,21 @@
+#+ summary: Given a rdf type, returns all the resources related to the type
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+CONSTRUCT {
+?item ?predicate ?prop .
+?prop a ?type
+}
+WHERE {
+GRAPH ?_g_iri {
+{
+ SELECT DISTINCT ?item where {
+   ?item a ?_type_iri .
+   FILTER NOT EXISTS { ?item rdf:type "https://w3id.org/okn/o/sdm#ModelConfigurationSetup" . }
+ }
+}
+?item ?predicate ?prop
+OPTIONAL {
+ ?prop a ?type
+}
+}
+}
