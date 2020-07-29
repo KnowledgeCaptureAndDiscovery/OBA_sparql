@@ -8,12 +8,11 @@ from typing import Dict
 import validators
 from SPARQLWrapper import SPARQLWrapper, POST, JSONLD, DIGEST
 from SPARQLWrapper.SPARQLExceptions import EndPointInternalError, QueryBadFormed, Unauthorized, EndPointNotFound
-from pyld import jsonld
-from rdflib import Graph
-
 from obasparql import gquery
 from obasparql.static import *
 from obasparql.utils import generate_new_uri, primitives
+from pyld import jsonld
+from rdflib import Graph
 
 EMBED_OPTION = "@always"
 
@@ -67,7 +66,6 @@ class QueryManager:
             tmp_context_class.pop("type")
         except KeyError:
             print("Key not found")
-
 
         self.context = temp_context.copy()
         for key, value in temp_context.items():
@@ -159,7 +157,8 @@ class QueryManager:
         kls, owl_class_name, resource_type_uri, username = self.set_up(**kwargs)
         request_args["resource"] = self.build_instance_uri(kwargs["id"])
         request_args["g"] = self.generate_graph(username)
-        return self.request_one(kls, owl_class_name, request_args, resource_type_uri, query_type)
+        add_id_framing = True if "add_id_framing" in kwargs and kwargs["add_id_framing"] else False
+        return self.request_one(kls, owl_class_name, request_args, resource_type_uri, query_type, add_id_framing)
 
     def get_all_resource(self, request_args, query_type, **kwargs):
         """
@@ -176,10 +175,12 @@ class QueryManager:
         request_args["g"] = self.generate_graph(username)
         return self.request_all(kls, owl_class_name, request_args, resource_type_uri, query_type)
 
-    def request_one(self, kls, owl_class_name, request_args, resource_type_uri, query_type="get_one_user"):
+    def request_one(self, kls, owl_class_name, request_args, resource_type_uri, query_type="get_one_user",
+                    add_id_framing=False):
         try:
             response = self.obtain_query(query_directory=owl_class_name, owl_class_uri=resource_type_uri,
-                                         query_type=query_type, request_args=request_args)
+                                         query_type=query_type, request_args=request_args,
+                                         add_id_framing=add_id_framing)
         except:
             logger.error("Exception occurred", exc_info=True)
             return "Bad request", 400, {}
@@ -195,8 +196,6 @@ class QueryManager:
                 logger.error(e, exc_info=True)
         else:
             return "Not found", 404, {}
-
-
 
     def request_all(self, kls, owl_class_name, request_args, resource_type_uri, query_type="get_all_user"):
         try:
@@ -431,7 +430,8 @@ class QueryManager:
                     pass
         return l
 
-    def obtain_query(self, query_directory, owl_class_uri, query_type, request_args=None, auth={}):
+    def obtain_query(self, query_directory, owl_class_uri, query_type, request_args=None, auth={},
+                     add_id_framing=False):
         """
         Given the owl_class and query_type, load the query template.
         Execute the query on the remote endpoint.
@@ -463,7 +463,7 @@ class QueryManager:
             raise e
 
         logger.debug("response: {}".format(result))
-        if "resource" in request_args:
+        if "resource" in request_args and not add_id_framing:
             return self.frame_results(result, owl_class_uri, request_args["resource"])
         return self.frame_results(result, owl_class_uri)
 
@@ -493,7 +493,6 @@ class QueryManager:
             if "@id" in response_ld_with_context and '@graph' not in response_ld_with_context:
                 return []
 
-
         endpoint_context = response_ld_with_context["@context"].copy() if "@context" in response_ld_with_context else {}
         hard_coding_model_catalog(endpoint_context)
         new_context = {**self.class_context, **endpoint_context}
@@ -501,7 +500,6 @@ class QueryManager:
                         "@context": new_context}
 
         frame = {"@context": new_context, "@type": owl_class_uri}
-
 
         if owl_resource_iri is not None:
             frame['@id'] = owl_resource_iri
@@ -513,7 +511,7 @@ class QueryManager:
         if '@graph' in response_ld_with_context and 'id' in response_ld_with_context["@graph"]:
             del response_ld_with_context["@graph"]["id"]
 
-        if '@graph' in response_ld_with_context :
+        if '@graph' in response_ld_with_context:
             logger.debug(json.dumps(response_ld_with_context["@graph"], indent=4))
         logger.info(json.dumps(frame, indent=4))
         framed = jsonld.frame(new_response, frame, {"embed": ("%s" % EMBED_OPTION)})
@@ -605,10 +603,12 @@ class QueryManager:
             logger.error(e, exc_info=True)
         raise Exception
 
+
 def hard_coding_model_catalog(context):
     for key, value in context.items():
         if "@type" in value and "XMLSchema#" in value["@type"]:
             del value["@type"]
+
 
 def merge(dict1, dict2):
     res = {**dict1, **dict2}
