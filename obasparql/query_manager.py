@@ -157,7 +157,7 @@ class QueryManager:
         kls, owl_class_name, resource_type_uri, username = self.set_up(**kwargs)
         request_args["resource"] = self.build_instance_uri(kwargs["id"])
         request_args["g"] = self.generate_graph(username)
-        add_id_framing = True if "add_id_framing" in kwargs and kwargs["add_id_framing"] else False
+        skip_id_framing = True if "skip_id_framing" in kwargs and kwargs["skip_id_framing"] else False
         return self.request_one(kls, owl_class_name, request_args, resource_type_uri, query_type, add_id_framing)
 
     def get_all_resource(self, request_args, query_type, **kwargs):
@@ -176,11 +176,11 @@ class QueryManager:
         return self.request_all(kls, owl_class_name, request_args, resource_type_uri, query_type)
 
     def request_one(self, kls, owl_class_name, request_args, resource_type_uri, query_type="get_one_user",
-                    add_id_framing=False):
+                    skip_id_framing=False):
         try:
             response = self.obtain_query(query_directory=owl_class_name, owl_class_uri=resource_type_uri,
                                          query_type=query_type, request_args=request_args,
-                                         add_id_framing=add_id_framing)
+                                         skip_id_framing=skip_id_framing)
         except:
             logger.error("Exception occurred", exc_info=True)
             return "Bad request", 400, {}
@@ -431,7 +431,7 @@ class QueryManager:
         return l
 
     def obtain_query(self, query_directory, owl_class_uri, query_type, request_args=None, auth={},
-                     add_id_framing=False):
+                     skip_id_framing=False):
         """
         Given the owl_class and query_type, load the query template.
         Execute the query on the remote endpoint.
@@ -463,7 +463,7 @@ class QueryManager:
             raise e
 
         logger.debug("response: {}".format(result))
-        if "resource" in request_args and not add_id_framing:
+        if "resource" in request_args and not skip_id_framing:
             return self.frame_results(result, owl_class_uri, request_args["resource"])
         return self.frame_results(result, owl_class_uri)
 
