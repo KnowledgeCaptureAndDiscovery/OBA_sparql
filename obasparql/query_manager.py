@@ -158,7 +158,7 @@ class QueryManager:
         request_args["resource"] = self.build_instance_uri(kwargs["id"])
         request_args["g"] = self.generate_graph(username)
         skip_id_framing = True if "skip_id_framing" in kwargs and kwargs["skip_id_framing"] else False
-        return self.request_one(kls, owl_class_name, request_args, resource_type_uri, query_type, add_id_framing)
+        return self.request_one(kls, owl_class_name, request_args, resource_type_uri, query_type, skip_id_framing)
 
     def get_all_resource(self, request_args, query_type, **kwargs):
         """
