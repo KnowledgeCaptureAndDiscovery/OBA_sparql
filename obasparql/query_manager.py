@@ -494,7 +494,6 @@ class QueryManager:
                 return []
 
         endpoint_context = response_ld_with_context["@context"].copy() if "@context" in response_ld_with_context else {}
-        hard_coding_model_catalog(endpoint_context)
         new_context = {**self.class_context, **endpoint_context}
         new_response = {"@graph": jsonld.expand(response_ld_with_context),
                         "@context": new_context}
@@ -602,12 +601,6 @@ class QueryManager:
         except EndPointNotFound as e:
             logger.error(e, exc_info=True)
         raise Exception
-
-
-def hard_coding_model_catalog(context):
-    for key, value in context.items():
-        if "@type" in value and "XMLSchema#" in value["@type"]:
-            del value["@type"]
 
 
 def merge(dict1, dict2):
