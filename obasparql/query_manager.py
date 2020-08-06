@@ -355,8 +355,8 @@ class QueryManager:
     def prepare_jsonld(self, resource):
         resource_dict = resource.to_dict()
         resource_dict["id"] = self.build_instance_uri(resource_dict["id"])
-        resource_dict['@context'] = self.context
-        resource_json = json.dumps(resource_dict)
+        resource_dict['@context'] = self.context["@context"]
+        resource_json = json.dumps(resource_dict, default=str)
         return resource_json
 
     def insert_query(self, request_args):
