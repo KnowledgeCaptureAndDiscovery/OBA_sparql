@@ -58,9 +58,17 @@ class QueryManager:
         for query_name, query_sparql in queries.items():
             glogger.debug(query_name)
             glogger.debug(query_sparql)
-        # Fix: oba needs key as camelcase and snake_case
-        temp_context = json.loads(self.read_context(context_dir / "context.json"))["@context"]
-        tmp_context_class = json.loads(self.read_context(context_dir / "context_class.json"))["@context"]
+        try:
+            temp_context = json.loads(self.read_context(context_dir / "context.json"))["@context"]
+            tmp_context_class = json.loads(self.read_context(context_dir / "context_class.json"))["@context"]
+        except FileNotFoundError as e:
+            exit(1)
+
+        try:
+            self.context_overwrite = json.loads(self.read_context(context_dir / "context_overwrite.json"))["@context"]
+        except FileNotFoundError as e:
+            self.context_overwrite = None
+
         try:
             tmp_context_class.pop("id")
             tmp_context_class.pop("type")
@@ -467,6 +475,11 @@ class QueryManager:
             return self.frame_results(result, owl_class_uri, request_args["resource"])
         return self.frame_results(result, owl_class_uri)
 
+    def overwrite_endpoint_context(self, endpoint_context):
+        for key, value in self.context_overwrite.items():
+            if key in endpoint_context:
+                endpoint_context[key] = value
+
     def frame_results(self, resp, owl_class_uri, owl_resource_iri=None):
         """
         Generate the framed using the owl_class.
@@ -494,6 +507,9 @@ class QueryManager:
                 return []
 
         endpoint_context = response_ld_with_context["@context"].copy() if "@context" in response_ld_with_context else {}
+        if self.context_overwrite:
+            self.overwrite_endpoint_context(endpoint_context)
+
         new_context = {**self.class_context, **endpoint_context}
         new_response = {"@graph": jsonld.expand(response_ld_with_context),
                         "@context": new_context}
@@ -533,7 +549,7 @@ class QueryManager:
                 return reader.read()
         except FileNotFoundError as e:
             logging.error(f"{context_file} missing")
-            exit(1)
+            raise e
 
     @staticmethod
     def read_template(owl_class_dir):
@@ -606,3 +622,4 @@ class QueryManager:
 def merge(dict1, dict2):
     res = {**dict1, **dict2}
     return res
+
