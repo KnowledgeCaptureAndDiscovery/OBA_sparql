@@ -6,9 +6,9 @@ mime_types = {
 }
 QUERY_TYPE_GET_ALL = "get_all"
 QUERY_TYPE_GET_ALL_USER = "get_all_user"
-QUERY_TIME_GET_ONE = "get_one"
-QUERY_TIME_GET_ONE_USER = "get_one_user"
-QUERIES_TYPES = [QUERY_TYPE_GET_ALL, QUERY_TYPE_GET_ALL_USER, QUERY_TIME_GET_ONE, QUERY_TIME_GET_ONE_USER]
+QUERY_TYPE_GET_ONE = "get_one"
+QUERY_TYPE_GET_ONE_USER = "get_one_user"
+QUERIES_TYPES = [QUERY_TYPE_GET_ALL, QUERY_TYPE_GET_ALL_USER, QUERY_TYPE_GET_ONE, QUERY_TYPE_GET_ONE_USER]
 
 XSD_DATATYPES = ["decimal", "float", "double", "integer", "positiveInteger", "negativeInteger", "nonPositiveInteger",
                  "nonNegativeInteger", "long", "int", "short", "byte", "unsignedLong", "unsignedInt", "unsignedShort",

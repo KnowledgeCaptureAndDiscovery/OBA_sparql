@@ -3,7 +3,7 @@ from typing import Dict
 import unittest
 
 from obasparql import QueryManager
-from obasparql.static import QUERY_TIME_GET_ONE_USER, QUERIES_TYPES, QUERY_TIME_GET_ONE
+from obasparql.static import QUERY_TYPE_GET_ONE_USER, QUERIES_TYPES, QUERY_TYPE_GET_ONE
 from test.settings import dbpedia_queries, dbpedia_context, dbpedia_endpoint, dbpedia_prefix
 
 
@@ -24,7 +24,7 @@ class TestQuery(unittest.TestCase):
         owl_class_name = "Band"
         owl_class_uri = "http://dbpedia.org/ontology/Band"
         resource_uri = "http://dbpedia.org/resource/Pink_Floyd"
-        query_type = QUERY_TIME_GET_ONE
+        query_type = QUERY_TYPE_GET_ONE
 
         request_args: Dict[str, str] = {
             "resource": resource_uri,

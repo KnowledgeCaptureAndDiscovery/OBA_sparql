@@ -5,7 +5,7 @@ from typing import Dict
 
 from SPARQLWrapper import JSONLD
 
-from obasparql.query_manager import QueryManager, QUERIES_TYPES, QUERY_TIME_GET_ONE_USER
+from obasparql.query_manager import QueryManager, QUERIES_TYPES, QUERY_TYPE_GET_ONE_USER
 from obasparql.utils import generate_uri
 from test.settings import *
 
@@ -30,7 +30,7 @@ class TestQueryManager(unittest.TestCase):
         owl_class_name = "Model"
         owl_class_uri = "https://w3id.org/okn/o/sdm#Model"
         resource_uri = "https://w3id.org/okn/i/mint/CYCLES"
-        query_type = QUERY_TIME_GET_ONE_USER
+        query_type = QUERY_TYPE_GET_ONE_USER
 
         # grlc args
         request_args: Dict[str, str] = {
@@ -50,7 +50,7 @@ class TestQueryManager(unittest.TestCase):
         owl_class_name = "Region"
         owl_class_uri = "https://w3id.org/okn/o/sdm#Region"
         resource_uri = "https://w3id.org/okn/i/mint/Travis"
-        query_type = QUERY_TIME_GET_ONE_USER
+        query_type = QUERY_TYPE_GET_ONE_USER
 
         # grlc args
         request_args: Dict[str, str] = {
@@ -97,7 +97,7 @@ class TestQueryManager(unittest.TestCase):
         owl_class_name = "Region"
         owl_resource_iri = "https://w3id.org/okn/i/mint/United_States"
         query_directory = owl_class_name
-        query_type = QUERY_TIME_GET_ONE_USER
+        query_type = QUERY_TYPE_GET_ONE_USER
 
         request_args: Dict[str, str] = {
             "resource": owl_resource_iri,

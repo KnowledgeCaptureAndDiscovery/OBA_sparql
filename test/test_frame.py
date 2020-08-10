@@ -4,7 +4,7 @@ from typing import Dict
 
 from obasparql.utils import generate_uri
 import unittest
-from obasparql.query_manager import QueryManager, QUERIES_TYPES, QUERY_TIME_GET_ONE_USER
+from obasparql.query_manager import QueryManager, QUERIES_TYPES, QUERY_TYPE_GET_ONE_USER
 
 from obasparql import QueryManager
 from test.settings import *
@@ -40,7 +40,7 @@ class TestFrame(unittest.TestCase):
         owl_class_name = "Model"
         owl_class_uri = "https://w3id.org/okn/o/sdm#Model"
         resource_uri = "https://w3id.org/okn/i/mint/CYCLES"
-        query_type = QUERY_TIME_GET_ONE_USER
+        query_type = QUERY_TYPE_GET_ONE_USER
 
         #grlc args
         request_args: Dict[str, str] = {
