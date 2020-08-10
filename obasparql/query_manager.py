@@ -1,28 +1,23 @@
 import json
 import logging.config
 import os
-import re
 from pathlib import Path
 from typing import Dict
 
 import validators
 from SPARQLWrapper import SPARQLWrapper, POST, JSONLD, DIGEST
 from SPARQLWrapper.SPARQLExceptions import EndPointInternalError, QueryBadFormed, Unauthorized, EndPointNotFound
-from obasparql import gquery
-from obasparql.static import *
-from obasparql.utils import generate_new_uri, primitives
 from pyld import jsonld
 from rdflib import Graph
+
+from obasparql import gquery
+from obasparql.static import *
+from obasparql.utils import generate_new_id, primitives, convert_snake
 
 EMBED_OPTION = "@always"
 
 glogger = logging.getLogger("grlc")
 logger = logging.getLogger('oba')
-
-
-def convert_snake(name):
-    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
-    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
 
 
 class QueryManager:
@@ -140,17 +135,10 @@ class QueryManager:
         elif "id" not in kwargs:
             if "label" in kwargs and kwargs["label"] is not None:
                 logging.warning("not supported")
-                # query_text = kwargs["label"]
-                # query_type = "get_all_search_user"
-                # request_args["text"] = query_text
-                # if "username" in kwargs:
-                #     return self.get_all_resource(request_args=request_args, query_type=query_type, **kwargs)
-                # elif "username" not in kwargs:
-                #     return self.get_all_resource(request_args=request_args, query_type=query_type, **kwargs)
             if "username" in kwargs:
                 return self.get_all_resource(request_args=request_args, query_type=GET_ALL_USER_QUERY, **kwargs)
             elif "username" not in kwargs:
-                return self.get_all_resource(request_args=request_args, query_type=GET_ALL_QUERY, **kwargs)
+                return self.get_all_resource(request_args=request_args, query_type=QUERY_TYPE_GET_ALL, **kwargs)
 
     def get_one_resource(self, request_args, query_type="get_one_user", **kwargs):
         """
@@ -296,7 +284,7 @@ class QueryManager:
             body.type.append(rdf_type_uri)
         else:
             body.type = [rdf_type_uri]
-        body.id = generate_new_uri()
+        body.id = generate_new_id()
         logger.info("Inserting the resource: {}".format(body.id))
 
         try:
@@ -332,7 +320,7 @@ class QueryManager:
                                 self.traverse_obj(inner_values, username)
 
                             if inner_values.id == None:
-                                inner_values.id = generate_new_uri()
+                                inner_values.id = generate_new_id()
                                 self.insert_all_resources(inner_values, username)
                 elif isinstance(value, dict):
                     pass
@@ -622,4 +610,3 @@ class QueryManager:
 def merge(dict1, dict2):
     res = {**dict1, **dict2}
     return res
-

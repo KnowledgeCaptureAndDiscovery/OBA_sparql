@@ -27,7 +27,7 @@ from test.settings import QUERIES_TYPES, dbpedia_queries, dbpedia_context, dbped
 from obasparql.static import * 
 queries = "queries/"
 contexts = "contexts/"
-QUERIES_TYPES = [GET_ALL_QUERY, GET_ALL_RELATED_QUERY, GET_ALL_RELATED_USER_QUERY, GET_ALL_USER_QUERY, GET_ONE_QUERY,
+QUERIES_TYPES = [QUERY_TYPE_GET_ALL, GET_ALL_RELATED_QUERY, GET_ALL_RELATED_USER_QUERY, GET_ALL_USER_QUERY, GET_ONE_QUERY,
                  GET_ONE_USER_QUERY]
 dbpedia_endpoint = "https://dbpedia.org/sparql"
 dbpedia_prefix = "http://dbpedia.org/resource"

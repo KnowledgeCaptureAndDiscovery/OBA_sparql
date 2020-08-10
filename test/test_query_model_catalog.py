@@ -1,11 +1,11 @@
 import logging
 from typing import Dict
 
-from obasparql.static import GET_ALL_USER_QUERY, GET_ONE_USER_QUERY
 import unittest
 
 from obasparql import QueryManager
-from test.settings import QUERIES_TYPES, model_catalog_queries, model_catalog_context, model_catalog_endpoint, \
+from obasparql.static import QUERIES_TYPES, QUERY_TYPE_GET_ALL_USER, QUERY_TIME_GET_ONE_USER
+from test.settings import model_catalog_queries, model_catalog_context, model_catalog_endpoint, \
     model_catalog_graph_base, model_catalog_prefix
 
 
@@ -31,7 +31,7 @@ class TestQuery(unittest.TestCase):
         """
         owl_class_name = "ModelConfiguration"
         owl_class_uri = "https://w3id.org/okn/o/sdm#ModelConfiguration"
-        query_type = GET_ALL_USER_QUERY
+        query_type = QUERY_TYPE_GET_ALL_USER
 
         grlc_request_args = {
             "type": owl_class_uri,
@@ -49,7 +49,7 @@ class TestQuery(unittest.TestCase):
         """
         owl_class_name = "ModelConfiguration"
         owl_class_uri = "https://w3id.org/okn/o/sd#DatasetSpecification"
-        query_type = GET_ALL_USER_QUERY
+        query_type = QUERY_TYPE_GET_ALL_USER
 
         grlc_request_args = {
             "type": owl_class_uri,
@@ -67,7 +67,7 @@ class TestQuery(unittest.TestCase):
         owl_class_name = "ModelConfiguration"
         owl_class_uri = "https://w3id.org/okn/o/sdm#ModelConfiguration"
         resource_uri = "https://w3id.org/okn/i/mint/pihm-v2"
-        query_type = GET_ONE_USER_QUERY
+        query_type = QUERY_TIME_GET_ONE_USER
 
         request_args: Dict[str, str] = {
             "resource": resource_uri,

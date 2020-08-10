@@ -5,12 +5,12 @@ from typing import Dict
 
 from SPARQLWrapper import JSONLD
 
-from obasparql.query_manager import QueryManager
-from obasparql.utils import generate_graph
+from obasparql.query_manager import QueryManager, QUERIES_TYPES
+from obasparql.utils import generate_uri
 from test.settings import *
 
 logger = logging.getLogger('testing')
-graph_user = generate_graph(model_catalog_graph_base, "mint@isi.edu")
+graph_user = generate_uri(model_catalog_graph_base, "mint@isi.edu")
 
 
 class TestQueryManager(unittest.TestCase):
