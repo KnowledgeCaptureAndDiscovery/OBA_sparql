@@ -75,15 +75,15 @@ class QueryManager:
         try:
             context_json = "context.json"
             context_class_json = "context_class.json"
-            temp_context = json.loads(self.read_context(context_dir / context_json))[context_key]
-            tmp_context_class = json.loads(self.read_context(context_dir / context_class_json))[context_key]
+            temp_context = json.loads(self.read_context(context_dir / context_json))[CONTEXT_KEY]
+            tmp_context_class = json.loads(self.read_context(context_dir / context_class_json))[CONTEXT_KEY]
         except FileNotFoundError as e:
             logging.error(f"{e}")
             exit(1)
 
         try:
             context_overwrite_json = "context_overwrite.json"
-            self.context_overwrite = json.loads(self.read_context(context_dir / context_overwrite_json))[context_key]
+            self.context_overwrite = json.loads(self.read_context(context_dir / context_overwrite_json))[CONTEXT_KEY]
         except FileNotFoundError as e:
             self.context_overwrite = None
 

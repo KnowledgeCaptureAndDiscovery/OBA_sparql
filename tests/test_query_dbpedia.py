@@ -4,7 +4,7 @@ import unittest
 
 from obasparql import QueryManager
 from obasparql.static import QUERY_TYPE_GET_ONE_USER, QUERIES_TYPES, QUERY_TYPE_GET_ONE
-from test.settings import dbpedia_queries, dbpedia_context, dbpedia_endpoint, dbpedia_prefix
+from tests.settings import dbpedia_queries, dbpedia_context, dbpedia_endpoint, dbpedia_prefix
 
 
 class TestQuery(unittest.TestCase):

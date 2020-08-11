@@ -5,7 +5,7 @@ import unittest
 
 from obasparql import QueryManager
 from obasparql.static import QUERIES_TYPES, QUERY_TYPE_GET_ALL_USER, QUERY_TYPE_GET_ONE_USER
-from test.settings import model_catalog_queries, model_catalog_context, model_catalog_endpoint, \
+from tests.settings import model_catalog_queries, model_catalog_context, model_catalog_endpoint, \
     model_catalog_graph_base, model_catalog_prefix
 
 

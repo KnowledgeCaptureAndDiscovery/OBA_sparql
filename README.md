@@ -23,7 +23,7 @@ TODO: Insert a good example.
 ```python
 
 from obasparql import QueryManager
-from test.settings import QUERIES_TYPES, dbpedia_queries, dbpedia_context, dbpedia_endpoint, dbpedia_prefix
+from tests.settings import QUERIES_TYPES, dbpedia_queries, dbpedia_context, dbpedia_endpoint, dbpedia_prefix
 from obasparql.static import * 
 queries = "queries/"
 contexts = "contexts/"
