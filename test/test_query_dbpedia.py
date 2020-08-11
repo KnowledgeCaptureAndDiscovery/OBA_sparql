@@ -14,8 +14,8 @@ class TestQuery(unittest.TestCase):
                                           context_dir=dbpedia_context,
                                           queries_types=QUERIES_TYPES,
                                           endpoint=dbpedia_endpoint,
-                                          graph_base=None,
-                                          prefix=dbpedia_prefix)
+                                          named_graph_base=None,
+                                          uri_prefix=dbpedia_prefix)
 
     def test_obtain_query_get_one(self):
         """

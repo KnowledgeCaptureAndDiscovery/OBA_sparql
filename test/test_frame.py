@@ -25,8 +25,8 @@ class TestFrame(unittest.TestCase):
                                           context_dir=model_catalog_context,
                                           queries_types=QUERIES_TYPES,
                                           endpoint=model_catalog_endpoint,
-                                          graph_base=model_catalog_graph_base,
-                                          prefix=model_catalog_prefix)
+                                          named_graph_base=model_catalog_graph_base,
+                                          uri_prefix=model_catalog_prefix)
 
     def test_frame_author(self):
         """

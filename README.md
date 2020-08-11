@@ -37,8 +37,8 @@ query_manager = QueryManager(queries_dir=queries,
                                   context_dir=contexts,
                                   queries_types=QUERIES_TYPES,
                                   endpoint=dbpedia_endpoint,
-                                  graph_base=graph,
-                                  prefix=dbpedia_prefix)
+                                  named_graph_base=graph,
+                                  uri_prefix=dbpedia_prefix)
 
 query_manager.get_one_resource()
 query_manager.get_all_resource()
