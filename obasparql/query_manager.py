@@ -345,13 +345,6 @@ class QueryManager:
             return uri
         return "{}{}".format(self.prefix, uri)
 
-    def convert_json_to_triples(self, body):
-        body_json = self.prepare_jsonld(body)
-        prefixes, triples = self.get_insert_query(body_json)
-        prefixes = '\n'.join(prefixes)
-        triples = '\n'.join(triples)
-        return prefixes, triples
-
     def prepare_jsonld(self, resource):
         resource_dict = resource.to_dict()
         resource_dict["id"] = self.build_instance_uri(resource_dict["id"])
