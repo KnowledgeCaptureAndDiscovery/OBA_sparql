@@ -296,13 +296,6 @@ class QueryManager:
         else:
             return "Error inserting query", 407, {}
 
-    def convert_json_to_triples(self, body):
-        body_json = self.prepare_jsonld(body)
-        prefixes, triples = self.get_insert_query(body_json)
-        prefixes = '\n'.join(prefixes)
-        triples = '\n'.join(triples)
-        return prefixes, triples
-
     # SPARQL AND JSON LD METHODS
 
     def obtain_query(self, query_directory, owl_class_uri, query_type, request_args=None, auth={},
