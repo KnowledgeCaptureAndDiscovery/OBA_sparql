@@ -31,6 +31,12 @@ SPARQL_ID_TYPE_VARIABLE = "resource"
 
 SKIP_ID_FRAMING_KEY = "skip_id_framing"
 
+CONTEXT_FILE = "context.json"
+CONTEXT_CLASS_FILE = "context_class.json"
+CONTEXT_OVERWRITE_CLASS_FILE = "context_class.json"
+
+#Directory where the default queries are
+DEFAULT_DIR = "_default_"
 
 class Query(Enum):
     GET_ALL = ("get_all")

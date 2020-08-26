@@ -32,18 +32,18 @@ class QueryManager:
                  endpoint,
                  named_graph_base,
                  uri_prefix,
+                 queries_dir,
+                 context_dir,
                  endpoint_username=None,
-                 endpoint_password=None,
-                 **kwargs):
+                 endpoint_password=None):
         """
         Parameters
         ----------
         endpoint : URL of endpoint
         named_graph_base : The prefix or base of the graphs
-        uri_prefix : The prefix for the IRIs of new resources
+        uri_prefix : The prefix for the IRIs of new resource
         endpoint_username : Username of endpoint (https://github.com/RDFLib/sparqlwrapper)
         endpoint_password : Password of endpoint (https://github.com/RDFLib/sparqlwrapper)
-        kwargs :
         """
         self.endpoint = endpoint
         self.endpoint_username = endpoint_username
@@ -52,10 +52,9 @@ class QueryManager:
         self.query_endpoint = f'{self.endpoint}/query'
         self.named_graph_base = named_graph_base
         self.uri_prefix = uri_prefix
-        self.kwargs = kwargs
-        queries_dir = Path(kwargs["queries_dir"])
-        context_dir = Path(kwargs["context_dir"])
-        default_dir = queries_dir / "_default_"
+        queries_dir = Path(queries_dir)
+        context_dir = Path(context_dir)
+        default_dir = queries_dir / DEFAULT_DIR
 
         # Obtain default queries
         queries = self.read_template(default_dir)
@@ -73,8 +72,8 @@ class QueryManager:
             glogger.debug(query_sparql)
 
         try:
-            context_json = "context.json"
-            context_class_json = "context_class.json"
+            context_json = CONTEXT_FILE
+            context_class_json = CONTEXT_CLASS_FILE
             temp_context = json.loads(self.read_context(context_dir / context_json))[CONTEXT_KEY]
             tmp_context_class = json.loads(self.read_context(context_dir / context_class_json))[CONTEXT_KEY]
         except FileNotFoundError as e:
@@ -82,7 +81,7 @@ class QueryManager:
             exit(1)
 
         try:
-            context_overwrite_json = "context_overwrite.json"
+            context_overwrite_json = CONTEXT_OVERWRITE_CLASS_FILE
             self.context_overwrite = json.loads(self.read_context(context_dir / context_overwrite_json))[CONTEXT_KEY]
         except FileNotFoundError as e:
             self.context_overwrite = None
@@ -114,28 +113,18 @@ class QueryManager:
             request_args[PER_PAGE_KEY] = kwargs[PER_PAGE_KEY]
 
         if CUSTOM_QUERY_NAME in kwargs:
-            query_type = kwargs[CUSTOM_QUERY_NAME]
-            return self.get_resource_custom(request_args=request_args, query_type=query_type, **kwargs)
+            return self.get_resource_custom(request_args=request_args, **kwargs)
         else:
             return self.get_resource_not_custom(request_args=request_args, **kwargs)
 
-        # CUSTOM
-
-        # NOT CUSTOM
-        ##GET_ONE
-        ##GET_ONE_USER
-
-        ##GET_ALL
-        ##GET_ALL_USER
-
-    def get_resource_custom(self, query_type, request_args, **kwargs):
+    def get_resource_custom(self, request_args, **kwargs):
         """
         Prepare request for custom queries
-        :param query_type:
         :param request_args: contains the values to replaced in the query
         :param kwargs:
         :return:
         """
+        query_type = kwargs[CUSTOM_QUERY_NAME]
         if ID_KEY in kwargs:
             return self.get_one_resource(request_args=request_args, query_type=query_type, **kwargs)
         else:

@@ -12,7 +12,6 @@ class TestQuery(unittest.TestCase):
     def setUp(self):
         self.query_manager = QueryManager(queries_dir=dbpedia_queries,
                                           context_dir=dbpedia_context,
-                                          queries_types=QUERIES_TYPES,
                                           endpoint=dbpedia_endpoint,
                                           named_graph_base=None,
                                           uri_prefix=dbpedia_prefix)
