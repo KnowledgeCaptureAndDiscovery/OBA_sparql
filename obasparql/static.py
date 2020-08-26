@@ -25,6 +25,13 @@ CONTEXT_KEY = "@context"
 CONTEXT_ID_KEY = "id"
 CONTEXT_TYPE_KEY = "type"
 
+SPARQL_QUERY_TYPE_VARIABLE = "type"
+SPARQL_GRAPH_TYPE_VARIABLE = "g"
+SPARQL_ID_TYPE_VARIABLE = "resource"
+
+SKIP_ID_FRAMING_KEY = "skip_id_framing"
+
+
 class Query(Enum):
     GET_ALL = ("get_all")
 
