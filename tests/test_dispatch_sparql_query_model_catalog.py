@@ -5,22 +5,21 @@ from typing import Dict
 
 from SPARQLWrapper import JSONLD
 
-from obasparql.query_manager import QueryManager
-from obasparql.utils import generate_graph
-from test.settings import *
+from obasparql.query_manager import QueryManager, QUERIES_TYPES, QUERY_TYPE_GET_ONE_USER
+from obasparql.utils import generate_uri
+from tests.settings import *
 
 logger = logging.getLogger('testing')
-graph_user = generate_graph(model_catalog_graph_base, "mint@isi.edu")
+graph_user = generate_uri(model_catalog_graph_base, "mint@isi.edu")
 
 
 class TestQueryManager(unittest.TestCase):
     def setUp(self):
         self.query_manager = QueryManager(queries_dir=model_catalog_queries,
                                           context_dir=model_catalog_context,
-                                          queries_types=QUERIES_TYPES,
                                           endpoint=model_catalog_endpoint,
-                                          graph_base=model_catalog_graph_base,
-                                          prefix=model_catalog_prefix)
+                                          named_graph_base=model_catalog_graph_base,
+                                          uri_prefix=model_catalog_prefix)
 
     def test_dispatch_sparqlquery(self):
         endpoint = "http://dbpedia.org/sparql"
@@ -55,7 +54,7 @@ class TestQueryManager(unittest.TestCase):
         owl_class_name = "Region"
         owl_resource_iri = "https://w3id.org/okn/i/mint/United_States"
         query_directory = owl_class_name
-        query_type = GET_ONE_USER_QUERY
+        query_type = QUERY_TYPE_GET_ONE_USER
 
         request_args: Dict[str, str] = {
             "resource": owl_resource_iri,

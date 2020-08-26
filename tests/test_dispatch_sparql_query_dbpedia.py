@@ -5,22 +5,21 @@ from typing import Dict
 
 from SPARQLWrapper import JSONLD
 
-from obasparql.query_manager import QueryManager
-from obasparql.utils import generate_graph
-from test.settings import *
+from obasparql.query_manager import QueryManager, QUERIES_TYPES
+from obasparql.utils import generate_uri
+from tests.settings import *
 
 logger = logging.getLogger('testing')
-graph_user = generate_graph(model_catalog_graph_base, "mint@isi.edu")
+graph_user = generate_uri(model_catalog_graph_base, "mint@isi.edu")
 
 
 class TestQueryManager(unittest.TestCase):
     def setUp(self):
         self.query_manager = QueryManager(queries_dir=dbpedia_queries,
                                           context_dir=dbpedia_context,
-                                          queries_types=QUERIES_TYPES,
                                           endpoint=dbpedia_endpoint,
-                                          graph_base=None,
-                                          prefix=dbpedia_prefix)
+                                          named_graph_base=None,
+                                          uri_prefix=dbpedia_prefix)
 
     def test_dispatch_sparqlquery(self):
         query_template = '''

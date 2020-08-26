@@ -24,35 +24,6 @@ glogger = logging.getLogger(__name__)
 XSD_PREFIX = 'PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>'
 
 
-def count_query_results(query, endpoint):
-    """
-    Returns the total number of results that query 'query' will generate
-    WARNING: This is too expensive just for providing a number of result pages
-             Providing a dummy count for now
-    """
-
-    # number_results_query, repl = re.subn("SELECT.*FROM", "SELECT COUNT (*) FROM", query)
-    # if not repl:
-    #     number_results_query = re.sub("SELECT.*{", "SELECT COUNT(*) {", query)
-    # number_results_query = re.sub("GROUP\s+BY\s+[\?\_\(\)a-zA-Z0-9]+", "", number_results_query)
-    # number_results_query = re.sub("ORDER\s+BY\s+[\?\_\(\)a-zA-Z0-9]+", "", number_results_query)
-    # number_results_query = re.sub("LIMIT\s+[0-9]+", "", number_results_query)
-    # number_results_query = re.sub("OFFSET\s+[0-9]+", "", number_results_query)
-    #
-    # glogger.debug("Query for result count: " + number_results_query)
-    #
-    # # Preapre HTTP request
-    # headers = { 'Accept' : 'application/json' }
-    # data = { 'query' : number_results_query }
-    # count_json = requests.get(endpoint, params=data, headers=headers).json()
-    # count = int(count_json['results']['bindings'][0]['callret-0']['value'])
-    # glogger.info("Paginated query has {} results in total".format(count))
-    #
-    # return count
-
-    return 1000
-
-
 def _getDictWithKey(key, dict_list):
     """ Returns the first dictionary in dict_list which contains the given key"""
     for d in dict_list:
@@ -71,9 +42,6 @@ def get_parameters(rq, variables, endpoint, query_metadata, auth=None):
         ?_name_prefix_datatype The parameter value is considered as literal and the datatype 'prefix:datatype' is added during substitution. The prefix must be specified according to the SPARQL syntax.
     """
 
-    # variables = translateQuery(Query.parseString(rq, parseAll=True)).algebra['_vars']
-
-    ## Aggregates
     internal_matcher = re.compile("__agg_\d+__")
     ## Basil-style variables
     variable_matcher = re.compile(
@@ -322,24 +290,6 @@ def get_metadata(rq, endpoint):
     glogger.debug(pformat(query_metadata, indent=32))
 
     return query_metadata
-
-
-def paginate_query(query, results_per_page, get_args):
-    page = get_args.get('page', 1)
-
-    glogger.info("Paginating query for page {}, {} results per page".format(page, results_per_page))
-
-    # If contains LIMIT or OFFSET, remove them
-    glogger.debug("Original query: " + query)
-    no_limit_query = re.sub("((LIMIT|OFFSET)\s+[0-9]+)*", "", query)
-    glogger.debug("No limit query: " + no_limit_query)
-
-    # Append LIMIT results_per_page OFFSET (page-1)*results_per_page
-    paginated_query = no_limit_query + " LIMIT {} OFFSET {}".format(results_per_page,
-                                                                    (int(page) - 1) * results_per_page)
-    glogger.debug("Paginated query: " + paginated_query)
-
-    return paginated_query
 
 
 def rewrite_query(query, parameters, get_args):

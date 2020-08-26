@@ -2,15 +2,14 @@ import json
 import logging.config
 from typing import Dict
 
-from obasparql.static import GET_ONE_USER_QUERY
-from obasparql.utils import generate_graph
+from obasparql.utils import generate_uri
 import unittest
+from obasparql.query_manager import QueryManager, QUERIES_TYPES, QUERY_TYPE_GET_ONE_USER
 
 from obasparql import QueryManager
-from test.settings import QUERIES_TYPES
-from test.settings import *
+from tests.settings import *
 
-graph_user = generate_graph(model_catalog_graph_base, "mint@isi.edu")
+graph_user = generate_uri(model_catalog_graph_base, "mint@isi.edu")
 
 
 class TestFrame(unittest.TestCase):
@@ -24,10 +23,9 @@ class TestFrame(unittest.TestCase):
     def setUp(self):
         self.query_manager = QueryManager(queries_dir=model_catalog_queries,
                                           context_dir=model_catalog_context,
-                                          queries_types=QUERIES_TYPES,
                                           endpoint=model_catalog_endpoint,
-                                          graph_base=model_catalog_graph_base,
-                                          prefix=model_catalog_prefix)
+                                          named_graph_base=model_catalog_graph_base,
+                                          uri_prefix=model_catalog_prefix)
 
     def test_frame_author(self):
         """
@@ -41,7 +39,7 @@ class TestFrame(unittest.TestCase):
         owl_class_name = "Model"
         owl_class_uri = "https://w3id.org/okn/o/sdm#Model"
         resource_uri = "https://w3id.org/okn/i/mint/CYCLES"
-        query_type = GET_ONE_USER_QUERY
+        query_type = QUERY_TYPE_GET_ONE_USER
 
         #grlc args
         request_args: Dict[str, str] = {

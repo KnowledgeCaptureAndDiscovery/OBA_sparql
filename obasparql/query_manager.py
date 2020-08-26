@@ -1,18 +1,18 @@
 import json
 import logging.config
 import os
-import re
 from pathlib import Path
 from typing import Dict
 
 import validators
 from SPARQLWrapper import SPARQLWrapper, POST, JSONLD, DIGEST
 from SPARQLWrapper.SPARQLExceptions import EndPointInternalError, QueryBadFormed, Unauthorized, EndPointNotFound
-from obasparql import gquery
-from obasparql.static import *
-from obasparql.utils import generate_new_uri, primitives
 from pyld import jsonld
 from rdflib import Graph
+
+from obasparql import gquery
+from obasparql.static import *
+from obasparql.utils import generate_new_id, primitives, convert_snake
 
 EMBED_OPTION = "@always"
 
@@ -20,29 +20,41 @@ glogger = logging.getLogger("grlc")
 logger = logging.getLogger('oba')
 
 
-def convert_snake(name):
-    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
-    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+def remove_jsonld_key(tmp_context_class, key):
+    try:
+        tmp_context_class.pop(key)
+    except KeyError:
+        logging.debug(f"The context file does not contains the id or type key")
 
 
 class QueryManager:
-    def __init__(self, endpoint, graph_base, prefix, endpoint_username=None, endpoint_password=None, **kwargs):
+    def __init__(self,
+                 endpoint,
+                 named_graph_base,
+                 uri_prefix,
+                 queries_dir,
+                 context_dir,
+                 endpoint_username=None,
+                 endpoint_password=None):
         """
-        Load the queries template from the directory
-        :param kwargs: contains the queries and context directories
-        :type kwargs: dict
+        Parameters
+        ----------
+        endpoint : URL of endpoint
+        named_graph_base : The prefix or base of the graphs
+        uri_prefix : The prefix for the IRIs of new resource
+        endpoint_username : Username of endpoint (https://github.com/RDFLib/sparqlwrapper)
+        endpoint_password : Password of endpoint (https://github.com/RDFLib/sparqlwrapper)
         """
         self.endpoint = endpoint
         self.endpoint_username = endpoint_username
         self.endpoint_password = endpoint_password
         self.update_endpoint = f'{self.endpoint}/update'
         self.query_endpoint = f'{self.endpoint}/query'
-        self.graph_base = graph_base
-        self.prefix = prefix
-        self.kwargs = kwargs
-        queries_dir = Path(kwargs["queries_dir"])
-        context_dir = Path(kwargs["context_dir"])
-        default_dir = queries_dir / "_default_"
+        self.named_graph_base = named_graph_base
+        self.uri_prefix = uri_prefix
+        queries_dir = Path(queries_dir)
+        context_dir = Path(context_dir)
+        default_dir = queries_dir / DEFAULT_DIR
 
         # Obtain default queries
         queries = self.read_template(default_dir)
@@ -58,69 +70,64 @@ class QueryManager:
         for query_name, query_sparql in queries.items():
             glogger.debug(query_name)
             glogger.debug(query_sparql)
+
         try:
-            temp_context = json.loads(self.read_context(context_dir / "context.json"))["@context"]
-            tmp_context_class = json.loads(self.read_context(context_dir / "context_class.json"))["@context"]
+            context_json = CONTEXT_FILE
+            context_class_json = CONTEXT_CLASS_FILE
+            temp_context = json.loads(self.read_context(context_dir / context_json))[CONTEXT_KEY]
+            tmp_context_class = json.loads(self.read_context(context_dir / context_class_json))[CONTEXT_KEY]
         except FileNotFoundError as e:
+            logging.error(f"{e}")
             exit(1)
 
         try:
-            self.context_overwrite = json.loads(self.read_context(context_dir / "context_overwrite.json"))["@context"]
+            context_overwrite_json = CONTEXT_OVERWRITE_CLASS_FILE
+            self.context_overwrite = json.loads(self.read_context(context_dir / context_overwrite_json))[CONTEXT_KEY]
         except FileNotFoundError as e:
             self.context_overwrite = None
 
-        try:
-            tmp_context_class.pop("id")
-            tmp_context_class.pop("type")
-        except KeyError:
-            print("Key not found")
+        remove_jsonld_key(tmp_context_class, CONTEXT_TYPE_KEY)
+        remove_jsonld_key(tmp_context_class, CONTEXT_ID_KEY)
 
         self.context = temp_context.copy()
-        for key, value in temp_context.items():
-            key_snake = convert_snake(key)
-            self.context[key] = value
-            if key_snake != key:
-                self.context[key_snake] = value
-        self.context = {"@context": self.context}
+        self.convert_snake_dict(temp_context)
+        self.context = {CONTEXT_KEY: self.context}
         self.class_context = tmp_context_class.copy()
 
     def get_resource(self, **kwargs):
         """
-        This method handles a GET METHOD
-        :param kwargs:
-        :type kwargs:
-        :return:
-        :rtype:
+        Handle the GET Requests
+        Parameters
+        ----------
+        kwargs :
+
+        Returns
+        -------
+
         """
 
-        # args
         request_args: Dict[str, str] = {}
-        if "page" in kwargs:
-            request_args["page"] = kwargs["page"]
-        if "per_page" in kwargs:
-            request_args["per_page"] = kwargs["per_page"]
+        if PAGE_KEY in kwargs:
+            request_args[PAGE_KEY] = kwargs[PAGE_KEY]
+        if PER_PAGE_KEY in kwargs:
+            request_args[PER_PAGE_KEY] = kwargs[PER_PAGE_KEY]
 
-        if "custom_query_name" in kwargs:
-            query_type = kwargs["custom_query_name"]
-            return self.get_resource_custom(request_args=request_args, query_type=query_type, **kwargs)
+        if CUSTOM_QUERY_NAME in kwargs:
+            return self.get_resource_custom(request_args=request_args, **kwargs)
         else:
             return self.get_resource_not_custom(request_args=request_args, **kwargs)
 
-    def get_resource_custom(self, query_type, request_args, **kwargs):
+    def get_resource_custom(self, request_args, **kwargs):
         """
         Prepare request for custom queries
-        :param query_type:
         :param request_args: contains the values to replaced in the query
         :param kwargs:
         :return:
         """
-        if "id" in kwargs:
+        query_type = kwargs[CUSTOM_QUERY_NAME]
+        if ID_KEY in kwargs:
             return self.get_one_resource(request_args=request_args, query_type=query_type, **kwargs)
         else:
-
-            if "label" in kwargs and kwargs["label"] is not None:
-                query_text = kwargs["label"]
-                request_args["label"] = query_text
             return self.get_all_resource(request_args=request_args, query_type=query_type, **kwargs)
 
     def get_resource_not_custom(self, request_args, **kwargs):
@@ -131,104 +138,76 @@ class QueryManager:
         :param kwargs:
         :return:
         """
-        kls, owl_class_name, resource_type_uri, username = self.set_up(**kwargs)
-        if "id" in kwargs and "username" in kwargs:
-            return self.get_one_resource(request_args=request_args, query_type=GET_ONE_USER_QUERY, **kwargs)
-        elif "id" in kwargs and "username" not in kwargs:
-            return self.get_one_resource(request_args=request_args, query_type=GET_ONE_QUERY, **kwargs)
+        if ID_KEY in kwargs and USERNAME_KEY in kwargs:
+            return self.get_one_resource(request_args=request_args, query_type=QUERY_TYPE_GET_ONE_USER, **kwargs)
+        elif ID_KEY in kwargs and USERNAME_KEY not in kwargs:
+            return self.get_one_resource(request_args=request_args, query_type=QUERY_TYPE_GET_ONE, **kwargs)
 
-        elif "id" not in kwargs:
-            if "label" in kwargs and kwargs["label"] is not None:
-                logging.warning("not supported")
-                # query_text = kwargs["label"]
-                # query_type = "get_all_search_user"
-                # request_args["text"] = query_text
-                # if "username" in kwargs:
-                #     return self.get_all_resource(request_args=request_args, query_type=query_type, **kwargs)
-                # elif "username" not in kwargs:
-                #     return self.get_all_resource(request_args=request_args, query_type=query_type, **kwargs)
-            if "username" in kwargs:
-                return self.get_all_resource(request_args=request_args, query_type=GET_ALL_USER_QUERY, **kwargs)
-            elif "username" not in kwargs:
-                return self.get_all_resource(request_args=request_args, query_type=GET_ALL_QUERY, **kwargs)
+        elif ID_KEY not in kwargs:
+            # TODO: Support label search
+            # if LABEL_KEY in kwargs and kwargs[LABEL_KEY] is not None:
+            # logging.warning("not supported")
+            if USERNAME_KEY in kwargs:
+                return self.get_all_resource(request_args=request_args, query_type=QUERY_TYPE_GET_ALL_USER, **kwargs)
+            elif USERNAME_KEY not in kwargs:
+                return self.get_all_resource(request_args=request_args, query_type=QUERY_TYPE_GET_ALL, **kwargs)
 
-    def get_one_resource(self, request_args, query_type="get_one_user", **kwargs):
+    def get_one_resource(self, request_args, query_type, **kwargs):
         """
         Handles a GET method to get one resource
-        :param query_type:
+        :param query_type: QUERY_TYPE_GET_ONE or QUERY_TYPE_GET_ONE_USER
         :param request_args:
         :param kwargs:
         :type kwargs:
         :return:
         :rtype:
         """
-        kls, owl_class_name, resource_type_uri, username = self.set_up(**kwargs)
-        request_args["resource"] = self.build_instance_uri(kwargs["id"])
-        request_args["g"] = self.generate_graph(username)
-        skip_id_framing = True if "skip_id_framing" in kwargs and kwargs["skip_id_framing"] else False
-        return self.request_one(kls, owl_class_name, request_args, resource_type_uri, query_type, skip_id_framing)
+        owl_class_name, resource_type_uri, username = self.set_up(**kwargs)
+        request_args[SPARQL_ID_TYPE_VARIABLE] = self.build_instance_uri(kwargs[ID_KEY])
+        request_args[SPARQL_GRAPH_TYPE_VARIABLE] = self.generate_graph(username)
+        skip_id_framing = True if SKIP_ID_FRAMING_KEY in kwargs and kwargs[SKIP_ID_FRAMING_KEY] else False
+        return self.request_one(owl_class_name, request_args, resource_type_uri, query_type, skip_id_framing)
 
     def get_all_resource(self, request_args, query_type, **kwargs):
         """
         Handles a GET method to get all resource by rdf_type
-        :param request_args:
-        :param query_type:
+        :param request_args: contains the values of the variables of the SPARQL query.
+                             See SPARQL_QUERY_TYPE_VARIABLE and SPARQL_GRAPH_TYPE_VARIABLE
+        :param query_type: QUERY_TYPE_GET_ALL or QUERY_TYPE_GET_ALL_USER
         :param kwargs:
         :type kwargs:
         :return:
         :rtype:
         """
-        kls, owl_class_name, resource_type_uri, username = self.set_up(**kwargs)
-        request_args["type"] = resource_type_uri
-        request_args["g"] = self.generate_graph(username)
-        return self.request_all(kls, owl_class_name, request_args, resource_type_uri, query_type)
+        owl_class_name, resource_type_uri, username = self.set_up(**kwargs)
+        request_args[SPARQL_QUERY_TYPE_VARIABLE] = resource_type_uri
+        request_args[SPARQL_GRAPH_TYPE_VARIABLE] = self.generate_graph(username)
+        return self.request_all(owl_class_name, request_args, resource_type_uri, query_type)
 
-    def request_one(self, kls, owl_class_name, request_args, resource_type_uri, query_type="get_one_user",
-                    skip_id_framing=False):
+    # TODO: Merge request_one and request_all
+    def request_one(self, owl_class_name, request_args, resource_type_uri, query_type, skip_id_framing=False):
         try:
-            response = self.obtain_query(query_directory=owl_class_name, owl_class_uri=resource_type_uri,
-                                         query_type=query_type, request_args=request_args,
-                                         skip_id_framing=skip_id_framing)
+            return self.obtain_query(query_directory=owl_class_name,
+                                     owl_class_uri=resource_type_uri,
+                                     query_type=query_type,
+                                     request_args=request_args,
+                                     skip_id_framing=skip_id_framing)
         except:
             logger.error("Exception occurred", exc_info=True)
-            return "Bad request", 400, {}
+            return "Bad request", 500, {}
 
-        if len(response) > 0:
-            try:
-                return kls.from_dict(response[0])
-            except ValueError as e:
-                raise e
-                logger.error(e, exc_info=True)
-            except Exception as e:
-                raise e
-                logger.error(e, exc_info=True)
-        else:
-            return "Not found", 404, {}
-
-    def request_all(self, kls, owl_class_name, request_args, resource_type_uri, query_type="get_all_user"):
+    def request_all(self, owl_class_name, request_args, resource_type_uri, query_type="get_all_user"):
         try:
-            response = self.obtain_query(query_directory=owl_class_name, owl_class_uri=resource_type_uri,
-                                         query_type=query_type, request_args=request_args)
+            return self.obtain_query(query_directory=owl_class_name,
+                                     owl_class_uri=resource_type_uri,
+                                     query_type=query_type,
+                                     request_args=request_args)
         except Exception as e:
             logger.error(e, exc_info=True)
-            return "Bad request error", 400, {}
-
-        items = []
-        try:
-            for d in response:
-                items.append(kls.from_dict(d))
-        except ValueError as e:
-            logger.error(e, exc_info=True)
-            return "Bad request error", 400, {}
-
-        except Exception as e:
-            logger.error(e, exc_info=True)
-            return "Internal server error", 500, {}
-
-        return items
+            return "Bad request error", 500, {}
 
     def put_resource(self, **kwargs):
-        resource_uri = self.build_instance_uri(kwargs["id"])
+        resource_uri = self.build_instance_uri(kwargs[ID_KEY])
         body = kwargs["body"]
         body.id = resource_uri
 
@@ -268,7 +247,7 @@ class QueryManager:
             return "Error inserting query", 407, {}
 
     def delete_resource(self, **kwargs):
-        resource_uri = self.build_instance_uri(kwargs["id"])
+        resource_uri = self.build_instance_uri(kwargs[ID_KEY])
         try:
             username = kwargs["user"]
         except Exception:
@@ -296,7 +275,7 @@ class QueryManager:
             body.type.append(rdf_type_uri)
         else:
             body.type = [rdf_type_uri]
-        body.id = generate_new_uri()
+        body.id = generate_new_id()
         logger.info("Inserting the resource: {}".format(body.id))
 
         try:
@@ -314,137 +293,14 @@ class QueryManager:
         else:
             return "Error inserting query", 407, {}
 
-    def convert_json_to_triples(self, body):
-        body_json = self.prepare_jsonld(body)
-        prefixes, triples = self.get_insert_query(body_json)
-        prefixes = '\n'.join(prefixes)
-        triples = '\n'.join(triples)
-        return prefixes, triples
-
-    def traverse_obj(self, body, username):
-        for key, value in body.__dict__.items():
-            if key != "openapi_types" and key != "attribute_map":
-                if isinstance(value, list):
-                    for inner_values in value:
-                        if not (isinstance(inner_values, primitives.__args__) or isinstance(inner_values, dict)):
-                            list_of_obj = self.get_all_complex_objects(inner_values, username)
-                            if len(list_of_obj) != 0:
-                                self.traverse_obj(inner_values, username)
-
-                            if inner_values.id == None:
-                                inner_values.id = generate_new_uri()
-                                self.insert_all_resources(inner_values, username)
-                elif isinstance(value, dict):
-                    pass
-
-    def generate_graph(self, username):
-        return "{}{}".format(self.graph_base, username)
-
-    def build_instance_uri(self, uri):
-        if validators.url(uri):
-            return uri
-        return "{}{}".format(self.prefix, uri)
-
-    def convert_json_to_triples(self, body):
-        body_json = self.prepare_jsonld(body)
-        prefixes, triples = self.get_insert_query(body_json)
-        prefixes = '\n'.join(prefixes)
-        triples = '\n'.join(triples)
-        return prefixes, triples
-
-    def prepare_jsonld(self, resource):
-        resource_dict = resource.to_dict()
-        resource_dict["id"] = self.build_instance_uri(resource_dict["id"])
-        resource_dict['@context'] = self.context["@context"]
-        resource_json = json.dumps(resource_dict, default=str)
-        return resource_json
-
-    def insert_query(self, request_args):
-        query_string = f'{request_args["prefixes"]}' \
-                       f'INSERT DATA {{ GRAPH <{request_args["g"]}> ' \
-                       f'{{ {request_args["triples"]} }} }}'
-        sparql = SPARQLWrapper(self.update_endpoint)
-        self.set_authetication(sparql)
-        sparql.setMethod(POST)
-        try:
-            sparql.setQuery(query_string)
-            glogger.debug("insert_query: {}".format(query_string))
-            sparql.query()
-        except:
-            glogger.error("Exception occurred", exc_info=True)
-            return False
-        return True
-
-    def set_authetication(self, sparql):
-        sparql.setHTTPAuth(DIGEST)
-        if self.endpoint_username and self.endpoint_password:
-            sparql.setCredentials(self.endpoint_username, self.endpoint_password)
-
-    def delete_query(self, request_args):
-        sparql = SPARQLWrapper(self.update_endpoint)
-        self.set_authetication(sparql)
-        sparql.setMethod(POST)
-        query_string = f'' \
-                       f'DELETE WHERE {{ GRAPH <{request_args["g"]}> ' \
-                       f'{{ <{request_args["resource"]}> ?p ?o . }} }}'
-
-        try:
-            glogger.info("deleting {}".format(request_args["resource"]))
-            glogger.debug("deleting: {}".format(query_string))
-            sparql.setQuery(query_string)
-            sparql.query()
-        except Exception as e:
-            glogger.error("Exception occurred", exc_info=True)
-            return "Error delete query", 405, {}
-
-        if request_args["delete_incoming_relations"]:
-            query_string_reverse = f'' \
-                                   f'DELETE WHERE {{ GRAPH <{request_args["g"]}> ' \
-                                   f'{{ ?s ?p <{request_args["resource"]}>  }} }}'
-            try:
-                glogger.info("deleting incoming relations {}".format(request_args["resource"]))
-                glogger.debug("deleting: {}".format(query_string_reverse))
-                sparql.setQuery(query_string_reverse)
-                sparql.query()
-            except Exception as e:
-                glogger.error("Exception occurred", exc_info=True)
-                return "Error delete query", 405, {}
-
-        return "Deleted", 202, {}
-
-    def get_insert_query(self, resource_json):
-        prefixes = []
-        triples = []
-        g = Graph().parse(data=resource_json, format='json-ld', publicID=self.prefix)
-        s = g.serialize(format='turtle')
-        for n in g.namespace_manager.namespaces():
-            prefixes.append(f'PREFIX {n[0]}: <{n[1]}>')
-
-        for line in s.decode().split('\n'):
-            if not line.startswith('@prefix'):
-                triples.append(line)
-        return prefixes, triples
-
-    def get_all_complex_objects(self, body, username):
-        l = []
-        for key, value in body.__dict__.items():
-            if key != "openapi_types" and key != "attribute_map":
-                if isinstance(value, list):
-                    # print(type(value[0]))
-                    for inner_values in value:
-                        if not isinstance(inner_values, str) and not isinstance(inner_values, dict):
-                            l.append(inner_values)
-                elif isinstance(value, dict):
-                    pass
-        return l
+    # SPARQL AND JSON LD METHODS
 
     def obtain_query(self, query_directory, owl_class_uri, query_type, request_args=None, auth={},
                      skip_id_framing=False):
+        """"""
         """
         Given the owl_class and query_type, load the query template.
         Execute the query on the remote endpoint.
-        :param formData:
-        :type formData:
         :param query_directory:
         :type query_directory:
         :param query_type: The type of query. Required to load the query template.
@@ -455,14 +311,10 @@ class QueryManager:
         :type request_args:
         :return: Framed JSON
         :rtype: string
-
-        Args:
-            auth ():
-            owl_class_uri ():
         """
         query_template = getattr(self, query_directory)[query_type]
-        if "page" in request_args and "per_page" in request_args:
-            request_args["offset"] = (request_args["page"] - 1) * request_args["per_page"]
+        if PAGE_KEY in request_args and PER_PAGE_KEY in request_args:
+            request_args["offset"] = (request_args[PAGE_KEY] - 1) * request_args[PER_PAGE_KEY]
         try:
             result = self.dispatch_sparql_query(raw_sparql_query=query_template,
                                                 request_args=request_args,
@@ -519,12 +371,12 @@ class QueryManager:
         if owl_resource_iri is not None:
             frame['@id'] = owl_resource_iri
         frame["@context"]["type"] = "@type"
-        frame["@context"]["id"] = "@id"
+        frame["@context"][ID_KEY] = "@id"
         for property in frame["@context"].keys():
             if isinstance(frame["@context"][property], dict):
                 frame["@context"][property]["@container"] = "@set"
         if '@graph' in response_ld_with_context and 'id' in response_ld_with_context["@graph"]:
-            del response_ld_with_context["@graph"]["id"]
+            del response_ld_with_context["@graph"][ID_KEY]
 
         if '@graph' in response_ld_with_context:
             logger.debug(json.dumps(response_ld_with_context["@graph"], indent=4))
@@ -534,6 +386,152 @@ class QueryManager:
             return framed['@graph']
         else:
             return []
+
+    # UPDATE METHODS
+
+    def traverse_obj(self, body, username):
+        '''
+        Utils method to insert nested resources
+        Parameters
+        ----------
+        body :
+        username :
+
+        Returns
+        -------
+
+        '''
+        for key, value in body.__dict__.items():
+            if key != "openapi_types" and key != "attribute_map":
+                if isinstance(value, list):
+                    for inner_values in value:
+                        if not (isinstance(inner_values, primitives.__args__) or isinstance(inner_values, dict)):
+                            list_of_obj = self.get_all_complex_objects(inner_values, username)
+                            if len(list_of_obj) != 0:
+                                self.traverse_obj(inner_values, username)
+
+                            if inner_values.id == None:
+                                inner_values.id = generate_new_id()
+                                self.insert_all_resources(inner_values, username)
+                elif isinstance(value, dict):
+                    pass
+
+    def prepare_jsonld(self, resource):
+        resource_dict = resource.to_dict()
+        resource_dict[ID_KEY] = self.build_instance_uri(resource_dict[ID_KEY])
+        resource_dict['@context'] = self.context["@context"]
+        resource_json = json.dumps(resource_dict, default=str)
+        return resource_json
+
+    def insert_query(self, request_args):
+        query_string = f'{request_args["prefixes"]}' \
+                       f'INSERT DATA {{ GRAPH <{request_args["g"]}> ' \
+                       f'{{ {request_args["triples"]} }} }}'
+        sparql = SPARQLWrapper(self.update_endpoint)
+        self.set_authetication(sparql)
+        sparql.setMethod(POST)
+        try:
+            sparql.setQuery(query_string)
+            glogger.debug("insert_query: {}".format(query_string))
+            sparql.query()
+        except:
+            glogger.error("Exception occurred", exc_info=True)
+            return False
+        return True
+
+    def set_authetication(self, sparql):
+        sparql.setHTTPAuth(DIGEST)
+        if self.endpoint_username and self.endpoint_password:
+            sparql.setCredentials(self.endpoint_username, self.endpoint_password)
+
+    def delete_query(self, request_args):
+
+        sparql = SPARQLWrapper(self.update_endpoint)
+        self.set_authetication(sparql)
+        sparql.setMethod(POST)
+        query_string = f'' \
+                       f'DELETE WHERE {{ GRAPH <{request_args["g"]}> ' \
+                       f'{{ <{request_args["resource"]}> ?p ?o . }} }}'
+
+        try:
+            glogger.info("deleting {}".format(request_args["resource"]))
+            glogger.debug("deleting: {}".format(query_string))
+            sparql.setQuery(query_string)
+            sparql.query()
+        except Exception as e:
+            glogger.error("Exception occurred", exc_info=True)
+            return "Error delete query", 405, {}
+
+        if request_args["delete_incoming_relations"]:
+            query_string_reverse = f'' \
+                                   f'DELETE WHERE {{ GRAPH <{request_args["g"]}> ' \
+                                   f'{{ ?s ?p <{request_args["resource"]}>  }} }}'
+            try:
+                glogger.info("deleting incoming relations {}".format(request_args["resource"]))
+                glogger.debug("deleting: {}".format(query_string_reverse))
+                sparql.setQuery(query_string_reverse)
+                sparql.query()
+            except Exception as e:
+                glogger.error("Exception occurred", exc_info=True)
+                return "Error delete query", 405, {}
+
+        return "Deleted", 202, {}
+
+    def get_insert_query(self, resource_json):
+        prefixes = []
+        triples = []
+        g = Graph().parse(data=resource_json, format='json-ld', publicID=self.uri_prefix)
+        s = g.serialize(format='turtle')
+        for n in g.namespace_manager.namespaces():
+            prefixes.append(f'PREFIX {n[0]}: <{n[1]}>')
+
+        for line in s.decode().split('\n'):
+            if not line.startswith('@prefix'):
+                triples.append(line)
+        return prefixes, triples
+
+    def get_all_complex_objects(self, body, username):
+        l = []
+        for key, value in body.__dict__.items():
+            if key != "openapi_types" and key != "attribute_map":
+                if isinstance(value, list):
+                    # print(type(value[0]))
+                    for inner_values in value:
+                        if not isinstance(inner_values, str) and not isinstance(inner_values, dict):
+                            l.append(inner_values)
+                elif isinstance(value, dict):
+                    pass
+        return l
+
+    # TODO: Refactoring as a utils method. Remove self param
+    def convert_snake_dict(self, temp_context: Dict):
+        """
+        The Python server generated by OBA uses snake_case format for the JSON key.
+        This method generates the context used on the JSON-LD operations
+        Parameters
+        ----------
+        temp_context : Temporal dictionary with the JSON-LD context
+
+        Returns
+        -------
+
+        """
+
+        for key, value in temp_context.items():
+            key_snake = convert_snake(key)
+            self.context[key] = value
+            if key_snake != key:
+                self.context[key_snake] = value
+
+    # TODO: Refactoring as a utils method. Remove self param
+    def generate_graph(self, username):
+        return "{}{}".format(self.named_graph_base, username)
+
+    # TODO: Refactoring as a utils method. Remove self param
+    def build_instance_uri(self, uri):
+        if validators.url(uri):
+            return uri
+        return "{}{}".format(self.uri_prefix, uri)
 
     @staticmethod
     def read_context(context_file):
@@ -577,14 +575,13 @@ class QueryManager:
 
     @staticmethod
     def set_up(**kwargs):
-        if "username" in kwargs:
-            username = kwargs["username"]
+        if USERNAME_KEY in kwargs:
+            username = kwargs[USERNAME_KEY]
         else:
             username = None
         owl_class_name = kwargs["rdf_type_name"]
         resource_type_uri = kwargs["rdf_type_uri"]
-        kls = kwargs["kls"]
-        return kls, owl_class_name, resource_type_uri, username
+        return owl_class_name, resource_type_uri, username
 
     def dispatch_sparql_query(self, raw_sparql_query, request_args, return_format):
         query_metadata = gquery.get_metadata(raw_sparql_query, self.endpoint)
@@ -599,8 +596,8 @@ class QueryManager:
                 logger.error("Parameters given: {} ".format(request_args))
                 raise e
         # Rewrite query using pagination
-        if "per_page" in request_args and "offset" in request_args:
-            rewritten_query = rewritten_query.replace("LIMIT 100", "LIMIT {}".format(request_args["per_page"]))
+        if PER_PAGE_KEY in request_args and "offset" in request_args:
+            rewritten_query = rewritten_query.replace("LIMIT 100", "LIMIT {}".format(request_args[PER_PAGE_KEY]))
             rewritten_query = rewritten_query.replace("OFFSET 0", "OFFSET {}".format(request_args["offset"]))
         logger.info(rewritten_query)
         sparql = SPARQLWrapper(self.endpoint)
@@ -622,4 +619,3 @@ class QueryManager:
 def merge(dict1, dict2):
     res = {**dict1, **dict2}
     return res
-
