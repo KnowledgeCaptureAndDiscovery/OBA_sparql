@@ -7,7 +7,7 @@ import unittest
 from obasparql.query_manager import QueryManager, QUERIES_TYPES, QUERY_TYPE_GET_ONE_USER
 
 from obasparql import QueryManager
-from test.settings import *
+from tests.settings import *
 
 graph_user = generate_uri(model_catalog_graph_base, "mint@isi.edu")
 

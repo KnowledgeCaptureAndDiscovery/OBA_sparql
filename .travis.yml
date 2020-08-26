@@ -1,16 +1,22 @@
-dist: xenial
 language: python
-python:
-- '3.7'
+matrix:
+  include:
+  - os: linux
+    python: '3.6'
+  - os: linux
+    python: '3.7'
+  - os: linux
+    python: '3.8'
 install:
-- pip install coverage
-- pip install codecov
-- pip install -U pytest
-- pip install -U pytest-cov
-- pip install --upgrade setuptools wheel
+  - pip install -U pip
+  - pip install coverage
+  - pip install codecov
+  - pip install -U pytest
+  - pip install -U pytest-cov
+  - pip install --upgrade setuptools wheel
+  - python setup.py install
 script:
- - python setup.py install
- - pytest  --cov ./obasparql
+ - pytest
 after_success:
 - codecov
 deploy:

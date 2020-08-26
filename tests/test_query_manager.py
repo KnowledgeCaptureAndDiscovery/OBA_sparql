@@ -7,7 +7,7 @@ from SPARQLWrapper import JSONLD
 
 from obasparql.query_manager import QueryManager, QUERIES_TYPES, QUERY_TYPE_GET_ONE_USER
 from obasparql.utils import generate_uri
-from test.settings import *
+from tests.settings import *
 
 logger = logging.getLogger('testing')
 graph_user = generate_uri(model_catalog_graph_base, "mint@isi.edu")
@@ -20,6 +20,48 @@ class TestQueryManager(unittest.TestCase):
                                           endpoint=model_catalog_endpoint,
                                           named_graph_base=model_catalog_graph_base,
                                           uri_prefix=model_catalog_prefix)
+
+
+    def test_obtain_query_get_one_user(self):
+        """
+        Test to obtain one resource by the uri
+        """
+        owl_class_name = "Model"
+        owl_class_uri = "https://w3id.org/okn/o/sdm#Model"
+        resource_uri = "https://w3id.org/okn/i/mint/CYCLES"
+        query_type = QUERY_TYPE_GET_ONE_USER
+
+        # grlc args
+        request_args: Dict[str, str] = {
+            "resource": resource_uri,
+            "g": graph_user
+        }
+
+        resource = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
+                                                   query_type=query_type, request_args=request_args)
+
+        self.assertTrue(resource)
+
+    def test_obtain_query_get_one_user_region_case(self):
+        """
+        Test to obtain one resource by the uri
+        """
+        owl_class_name = "Region"
+        owl_class_uri = "https://w3id.org/okn/o/sdm#Region"
+        resource_uri = "https://w3id.org/okn/i/mint/Travis"
+        query_type = QUERY_TYPE_GET_ONE_USER
+
+        # grlc args
+        request_args: Dict[str, str] = {
+            "resource": resource_uri,
+            "g": graph_user
+        }
+
+        resource = self.query_manager.obtain_query(query_directory=owl_class_name,
+                                                                 owl_class_uri=owl_class_uri, query_type=query_type,
+                                                                 request_args=request_args)
+
+        self.assertEqual(resource_uri, resource[0]["id"])
 
     def test_dispatch_sparqlquery(self):
         endpoint = "http://dbpedia.org/sparql"
@@ -64,8 +106,8 @@ class TestQueryManager(unittest.TestCase):
         query_template = getattr(self.query_manager, query_directory)[query_type]
 
         results = self.query_manager.dispatch_sparql_query(raw_sparql_query=query_template,
-                                                           request_args=request_args,
-                                                           return_format=JSONLD)
+                                             request_args=request_args,
+                                             return_format=JSONLD)
         self.assertIsNotNone(json.loads(results))
 
     def test_framed_get_one(self):
@@ -105,22 +147,17 @@ class TestQueryManager(unittest.TestCase):
     def test_framed_get_one_reflexive(self):
         owl_class_uri = "https://w3id.org/okn/o/sdm#Region"
         owl_resource_uri = "https://w3id.org/okn/i/mint/United_States"
-        response = '''{
+        response = '''
+{
   "@graph" : [ {
-    "@id" : "https://w3id.org/okn/i/mint/Texas",
-    "@type" : "https://w3id.org/okn/o/sdm#Region",
-    "label" : "Texas (USA)",
-    "description" : "Texas is the second largest state in the United States by area (after Alaska) and population (after California). Located in the South Central region, Texas shares borders with the states of Louisiana to the east, Arkansas to the northeast, Oklahoma to the north, New Mexico to the west, and the Mexican states of Chihuahua, Coahuila, Nuevo Leon, and Tamaulipas to the southwest, and has a coastline with the Gulf of Mexico to the southeast.",
-    "geo" : "https://w3id.org/okn/i/mint/Texas_Shape",
-    "partOf" : "https://w3id.org/okn/i/mint/United_States"
-  }, {
-    "@id" : "https://w3id.org/okn/i/mint/Texas_Shape",
-    "@type" : "https://w3id.org/okn/o/sdm#GeoShape",
-    "label" : "Bounding box for Texas region"
+    "@id" : "https://w3id.org/okn/i/mint/America",
+    "@type" : "https://w3id.org/okn/o/sdm#Region"
   }, {
     "@id" : "https://w3id.org/okn/i/mint/United_States",
     "@type" : "https://w3id.org/okn/o/sdm#Region",
-    "label" : "United States of America"
+    "label" : "United States of America",
+    "description" : "The United States of America (U.S.A. or USA), commonly known as the United States (U.S. or US) or America, is a country comprising 50 states, a federal district, five major self-governing territories, and various possessions. At 3.8 million square miles (9.8 million km2), the United States is the world's third or fourth largest country by total area and is slightly smaller than the entire continent of Europe. With a population of over 327 million people, the U.S. is the third most populous country. The capital is Washington, D.C., and the most populous city is New York City. Most of the country is located contiguously in North America between Canada and Mexico.",
+    "partOf" : "https://w3id.org/okn/i/mint/America"
   }, {
     "@id" : "https://w3id.org/okn/o/sdm#Region",
     "@type" : "http://www.w3.org/2002/07/owl#Class"
@@ -128,10 +165,6 @@ class TestQueryManager(unittest.TestCase):
   "@context" : {
     "partOf" : {
       "@id" : "https://w3id.org/okn/o/sdm#partOf",
-      "@type" : "@id"
-    },
-    "geo" : {
-      "@id" : "https://w3id.org/okn/o/sdm#geo",
       "@type" : "@id"
     },
     "description" : {

@@ -1,2 +1,4 @@
-PyLD==1.0.5
-tox
+coverage
+codecov
+pytest
+pytest-cov

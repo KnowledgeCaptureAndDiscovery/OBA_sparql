@@ -7,7 +7,7 @@ from SPARQLWrapper import JSONLD
 
 from obasparql.query_manager import QueryManager, QUERIES_TYPES
 from obasparql.utils import generate_uri
-from test.settings import *
+from tests.settings import *
 
 logger = logging.getLogger('testing')
 graph_user = generate_uri(model_catalog_graph_base, "mint@isi.edu")
