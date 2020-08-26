@@ -131,7 +131,7 @@ class TestQuery(unittest.TestCase):
         assert response
 
 
-    def test_get_all_resources(self):
+    def test_get_all_resources_pagination(self):
         owl_class_uri = "https://w3id.org/okn/o/sdm#ModelConfigurationSetup"
         owl_class_name = "ModelConfigurationSetup"
         per_page = 2
