@@ -1,4 +1,6 @@
-# OBA Sparql Query Manager [![Build Status](https://travis-ci.com/KnowledgeCaptureAndDiscovery/OBA_sparql.svg?branch=master)](https://travis-ci.com/KnowledgeCaptureAndDiscovery/OBA_sparql)
+# OBA Sparql Query Manager [![Build Status](https://travis-ci.com/KnowledgeCaptureAndDiscovery/OBA_sparql.svg?branch=master)](https://travis-ci.com/KnowledgeCaptureAndDiscovery/OBA_sparql) [![codecov](https://codecov.io/gh/KnowledgeCaptureAndDiscovery/OBA_sparql/branch/master/graph/badge.svg)](https://codecov.io/gh/KnowledgeCaptureAndDiscovery/OBA_sparql)
+
+
 
 OBA Sparql Query Manager is a Python Module to translate CRUD requests to SPARQL queries. This module is used by
 OBA project to generate a REST API from OWL ontologies.

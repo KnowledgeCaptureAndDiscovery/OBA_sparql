@@ -59,7 +59,7 @@ class TestQuery(unittest.TestCase):
 
     def test_get_one(self):
         """
-        Test to obtain one resource by the uri
+        Test to obtain one resource by its uri
         """
         owl_class_name = "ModelConfiguration"
         owl_class_uri = "https://w3id.org/okn/o/sdm#ModelConfiguration"
@@ -79,7 +79,7 @@ class TestQuery(unittest.TestCase):
 
     def test_get_one_setup_custom(self):
         """
-        Test to obtain one resource by the uri and a custon query
+        Test to obtain one resource by its uri and a custon query
         """
         owl_class_name = "custom"
         resource_uri = "https://w3id.org/okn/i/mint/cycles-0.9.4-alpha-simple-pongo"

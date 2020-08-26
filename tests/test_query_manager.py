@@ -108,6 +108,7 @@ class TestQueryManager(unittest.TestCase):
         results = self.query_manager.dispatch_sparql_query(raw_sparql_query=query_template,
                                              request_args=request_args,
                                              return_format=JSONLD)
+        # prefixes, triples = self.query_manager.convert_json_to_triples(results)
         self.assertIsNotNone(json.loads(results))
 
     def test_framed_get_one(self):
