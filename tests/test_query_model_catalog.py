@@ -109,3 +109,15 @@ class TestQuery(unittest.TestCase):
                                                    rdf_type_uri=owl_class_uri,
                                                    rdf_type_name=owl_class_name)
         assert response
+
+
+    def test_get_resource_not_custom(self):
+        owl_class_uri = "https://w3id.org/okn/o/sdm#ModelConfigurationSetup"
+        owl_class_name = "ModelConfigurationSetup"
+        username = self.email
+        _id = "https://w3id.org/okn/i/mint/cycles-0.9.4-alpha-simple-pongo"
+        response = self.query_manager.get_resource(id=_id,
+                                                   username=username,
+                                                   rdf_type_uri=owl_class_uri,
+                                                   rdf_type_name=owl_class_name)
+        assert response
