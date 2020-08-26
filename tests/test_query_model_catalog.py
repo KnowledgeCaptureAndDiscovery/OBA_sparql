@@ -129,3 +129,17 @@ class TestQuery(unittest.TestCase):
                                                    rdf_type_uri=owl_class_uri,
                                                    rdf_type_name=owl_class_name)
         assert response
+
+
+    def test_get_all_resources(self):
+        owl_class_uri = "https://w3id.org/okn/o/sdm#ModelConfigurationSetup"
+        owl_class_name = "ModelConfigurationSetup"
+        per_page = 2
+        page = 1
+        username = self.email
+        response = self.query_manager.get_resource(username=username,
+                                                   page=page,
+                                                   per_page=per_page,
+                                                   rdf_type_uri=owl_class_uri,
+                                                   rdf_type_name=owl_class_name)
+        assert len(response) == 2
