@@ -128,10 +128,6 @@ class QueryManager:
         if ID_KEY in kwargs:
             return self.get_one_resource(request_args=request_args, query_type=query_type, **kwargs)
         else:
-
-            if LABEL_KEY in kwargs and kwargs[LABEL_KEY] is not None:
-                query_text = kwargs[LABEL_KEY]
-                request_args[LABEL_KEY] = query_text
             return self.get_all_resource(request_args=request_args, query_type=query_type, **kwargs)
 
     def get_resource_not_custom(self, request_args, **kwargs):
@@ -148,8 +144,9 @@ class QueryManager:
             return self.get_one_resource(request_args=request_args, query_type=QUERY_TYPE_GET_ONE, **kwargs)
 
         elif ID_KEY not in kwargs:
-            if LABEL_KEY in kwargs and kwargs[LABEL_KEY] is not None:
-                logging.warning("not supported")
+            # TODO: Support label search
+            # if LABEL_KEY in kwargs and kwargs[LABEL_KEY] is not None:
+            # logging.warning("not supported")
             if USERNAME_KEY in kwargs:
                 return self.get_all_resource(request_args=request_args, query_type=QUERY_TYPE_GET_ALL_USER, **kwargs)
             elif USERNAME_KEY not in kwargs:
