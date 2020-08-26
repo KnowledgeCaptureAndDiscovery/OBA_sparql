@@ -1,25 +1,26 @@
 import logging
 from typing import Dict
 
+from obasparql.static import GET_ALL_USER_QUERY, GET_ONE_USER_QUERY
 import unittest
 
 from obasparql import QueryManager
-from obasparql.static import QUERIES_TYPES, QUERY_TYPE_GET_ALL_USER, QUERY_TYPE_GET_ONE_USER
-from tests.settings import model_catalog_queries, model_catalog_context, model_catalog_endpoint, \
-    model_catalog_graph_base, model_catalog_prefix
+from test.settings import QUERIES_TYPES, model_catalog_queries_dev, model_catalog_context_dev, model_catalog_endpoint_dev, \
+    model_catalog_graph_base_dev, model_catalog_prefix_dev
 
 
 class TestQuery(unittest.TestCase):
     @staticmethod
     def generate_graph(username):
-        return "{}{}".format(model_catalog_graph_base, username)
+        return "{}{}".format(model_catalog_graph_base_dev, username)
 
     def setUp(self):
-        self.query_manager = QueryManager(queries_dir=model_catalog_queries,
-                                          context_dir=model_catalog_context,
-                                          endpoint=model_catalog_endpoint,
-                                          named_graph_base=model_catalog_graph_base,
-                                          uri_prefix=model_catalog_prefix)
+        self.query_manager = QueryManager(queries_dir=model_catalog_queries_dev,
+                                          context_dir=model_catalog_context_dev,
+                                          queries_types=QUERIES_TYPES,
+                                          endpoint=model_catalog_endpoint_dev,
+                                          graph_base=model_catalog_graph_base_dev,
+                                          prefix=model_catalog_prefix_dev)
 
         username = "mint@isi.edu"
         self.username = self.generate_graph(username)
@@ -30,7 +31,7 @@ class TestQuery(unittest.TestCase):
         """
         owl_class_name = "ModelConfiguration"
         owl_class_uri = "https://w3id.org/okn/o/sdm#ModelConfiguration"
-        query_type = QUERY_TYPE_GET_ALL_USER
+        query_type = GET_ALL_USER_QUERY
 
         grlc_request_args = {
             "type": owl_class_uri,
@@ -48,7 +49,7 @@ class TestQuery(unittest.TestCase):
         """
         owl_class_name = "ModelConfiguration"
         owl_class_uri = "https://w3id.org/okn/o/sd#DatasetSpecification"
-        query_type = QUERY_TYPE_GET_ALL_USER
+        query_type = GET_ALL_USER_QUERY
 
         grlc_request_args = {
             "type": owl_class_uri,
@@ -66,7 +67,7 @@ class TestQuery(unittest.TestCase):
         owl_class_name = "ModelConfiguration"
         owl_class_uri = "https://w3id.org/okn/o/sdm#ModelConfiguration"
         resource_uri = "https://w3id.org/okn/i/mint/pihm-v2"
-        query_type = QUERY_TYPE_GET_ONE_USER
+        query_type = GET_ONE_USER_QUERY
 
         request_args: Dict[str, str] = {
             "resource": resource_uri,
@@ -76,7 +77,11 @@ class TestQuery(unittest.TestCase):
         resource = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
                                                    query_type=query_type, request_args=request_args)
         self.assertEqual(len(resource), 1)
-        self.assertIn("ModelConfiguration", resource[0]['type'])
+        print(resource)
+        # There is an inconsistency in rdf:types, some are returned with the full URI.
+        # The model config type is always returned second
+        self.assertIn("https://w3id.org/okn/o/sdm#ModelConfiguration",
+                      (resource[0]['http://www.w3.org/1999/02/22-rdf-syntax-ns#type'])[1]['id'])
         self.assertEqual(resource[0]["id"], resource_uri)
 
 
