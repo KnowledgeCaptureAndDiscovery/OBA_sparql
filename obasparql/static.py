@@ -19,9 +19,24 @@ LABEL_KEY = "label"
 PAGE_KEY = "page"
 PER_PAGE_KEY = "per_page"
 
+CUSTOM_QUERY_NAME = "custom_query_name"
+
 CONTEXT_KEY = "@context"
 CONTEXT_ID_KEY = "id"
 CONTEXT_TYPE_KEY = "type"
+
+SPARQL_QUERY_TYPE_VARIABLE = "type"
+SPARQL_GRAPH_TYPE_VARIABLE = "g"
+SPARQL_ID_TYPE_VARIABLE = "resource"
+
+SKIP_ID_FRAMING_KEY = "skip_id_framing"
+
+CONTEXT_FILE = "context.json"
+CONTEXT_CLASS_FILE = "context_class.json"
+CONTEXT_OVERWRITE_CLASS_FILE = "context_class.json"
+
+#Directory where the default queries are
+DEFAULT_DIR = "_default_"
 
 class Query(Enum):
     GET_ALL = ("get_all")

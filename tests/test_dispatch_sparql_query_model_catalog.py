@@ -17,7 +17,6 @@ class TestQueryManager(unittest.TestCase):
     def setUp(self):
         self.query_manager = QueryManager(queries_dir=model_catalog_queries,
                                           context_dir=model_catalog_context,
-                                          queries_types=QUERIES_TYPES,
                                           endpoint=model_catalog_endpoint,
                                           named_graph_base=model_catalog_graph_base,
                                           uri_prefix=model_catalog_prefix)

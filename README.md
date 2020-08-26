@@ -23,19 +23,16 @@ TODO: Insert a good example.
 ```python
 
 from obasparql import QueryManager
-from tests.settings import QUERIES_TYPES, dbpedia_queries, dbpedia_context, dbpedia_endpoint, dbpedia_prefix
+from test.settings import dbpedia_queries, dbpedia_context, dbpedia_endpoint, dbpedia_prefix
 from obasparql.static import * 
 queries = "queries/"
 contexts = "contexts/"
-QUERIES_TYPES = [QUERY_TYPE_GET_ALL, GET_ALL_RELATED_QUERY, GET_ALL_RELATED_USER_QUERY, GET_ALL_USER_QUERY, GET_ONE_QUERY,
-                 GET_ONE_USER_QUERY]
 dbpedia_endpoint = "https://dbpedia.org/sparql"
 dbpedia_prefix = "http://dbpedia.org/resource"
 graph = None
 
 query_manager = QueryManager(queries_dir=queries,
                                   context_dir=contexts,
-                                  queries_types=QUERIES_TYPES,
                                   endpoint=dbpedia_endpoint,
                                   named_graph_base=graph,
                                   uri_prefix=dbpedia_prefix)
@@ -46,7 +43,7 @@ query_manager.get_all_resource()
 
 ## Supported features
 
-OBA Sparql supports two types of queries:
+OBA sparql supports two types of queries:
 
 - Default queries: queries related to the CRUD requests.
     - Get a resource and get all the resource by type.
