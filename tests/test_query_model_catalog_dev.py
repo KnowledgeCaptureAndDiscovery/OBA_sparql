@@ -1,11 +1,9 @@
-import logging
+import unittest
 from typing import Dict
 
-from obasparql.static import GET_ALL_USER_QUERY, GET_ONE_USER_QUERY
-import unittest
-
 from obasparql import QueryManager
-from test.settings import QUERIES_TYPES, model_catalog_queries_dev, model_catalog_context_dev, model_catalog_endpoint_dev, \
+from obasparql.static import QUERY_TYPE_GET_ALL_USER, QUERY_TYPE_GET_ONE_USER
+from tests.settings import model_catalog_queries_dev, model_catalog_context_dev, model_catalog_endpoint_dev, \
     model_catalog_graph_base_dev, model_catalog_prefix_dev
 
 
@@ -17,10 +15,9 @@ class TestQuery(unittest.TestCase):
     def setUp(self):
         self.query_manager = QueryManager(queries_dir=model_catalog_queries_dev,
                                           context_dir=model_catalog_context_dev,
-                                          queries_types=QUERIES_TYPES,
                                           endpoint=model_catalog_endpoint_dev,
-                                          graph_base=model_catalog_graph_base_dev,
-                                          prefix=model_catalog_prefix_dev)
+                                          named_graph_base=model_catalog_graph_base_dev,
+                                          uri_prefix=model_catalog_prefix_dev)
 
         username = "mint@isi.edu"
         self.username = self.generate_graph(username)
@@ -31,7 +28,7 @@ class TestQuery(unittest.TestCase):
         """
         owl_class_name = "ModelConfiguration"
         owl_class_uri = "https://w3id.org/okn/o/sdm#ModelConfiguration"
-        query_type = GET_ALL_USER_QUERY
+        query_type = QUERY_TYPE_GET_ALL_USER
 
         grlc_request_args = {
             "type": owl_class_uri,
@@ -49,7 +46,7 @@ class TestQuery(unittest.TestCase):
         """
         owl_class_name = "ModelConfiguration"
         owl_class_uri = "https://w3id.org/okn/o/sd#DatasetSpecification"
-        query_type = GET_ALL_USER_QUERY
+        query_type = QUERY_TYPE_GET_ALL_USER
 
         grlc_request_args = {
             "type": owl_class_uri,
@@ -67,7 +64,7 @@ class TestQuery(unittest.TestCase):
         owl_class_name = "ModelConfiguration"
         owl_class_uri = "https://w3id.org/okn/o/sdm#ModelConfiguration"
         resource_uri = "https://w3id.org/okn/i/mint/pihm-v2"
-        query_type = GET_ONE_USER_QUERY
+        query_type = QUERY_TYPE_GET_ONE_USER
 
         request_args: Dict[str, str] = {
             "resource": resource_uri,
