@@ -165,11 +165,11 @@ class QueryManager:
         :return:
         :rtype:
         """
-        kls, owl_class_name, resource_type_uri, username = self.set_up(**kwargs)
+        owl_class_name, resource_type_uri, username = self.set_up(**kwargs)
         request_args[SPARQL_ID_TYPE_VARIABLE] = self.build_instance_uri(kwargs[ID_KEY])
         request_args[SPARQL_GRAPH_TYPE_VARIABLE] = self.generate_graph(username)
         skip_id_framing = True if SKIP_ID_FRAMING_KEY in kwargs and kwargs[SKIP_ID_FRAMING_KEY] else False
-        return self.request_one(kls, owl_class_name, request_args, resource_type_uri, query_type, skip_id_framing)
+        return self.request_one(owl_class_name, request_args, resource_type_uri, query_type, skip_id_framing)
 
     def get_all_resource(self, request_args, query_type, **kwargs):
         """
@@ -182,13 +182,13 @@ class QueryManager:
         :return:
         :rtype:
         """
-        kls, owl_class_name, resource_type_uri, username = self.set_up(**kwargs)
+        owl_class_name, resource_type_uri, username = self.set_up(**kwargs)
         request_args[SPARQL_QUERY_TYPE_VARIABLE] = resource_type_uri
         request_args[SPARQL_GRAPH_TYPE_VARIABLE] = self.generate_graph(username)
-        return self.request_all(kls, owl_class_name, request_args, resource_type_uri, query_type)
+        return self.request_all(owl_class_name, request_args, resource_type_uri, query_type)
 
     # TODO: Merge request_one and request_all
-    def request_one(self, kls, owl_class_name, request_args, resource_type_uri, query_type, skip_id_framing=False):
+    def request_one(self, owl_class_name, request_args, resource_type_uri, query_type, skip_id_framing=False):
         try:
             return self.obtain_query(query_directory=owl_class_name,
                                      owl_class_uri=resource_type_uri,
@@ -199,7 +199,7 @@ class QueryManager:
             logger.error("Exception occurred", exc_info=True)
             return "Bad request", 500, {}
 
-    def request_all(self, kls, owl_class_name, request_args, resource_type_uri, query_type="get_all_user"):
+    def request_all(self, owl_class_name, request_args, resource_type_uri, query_type="get_all_user"):
         try:
             return self.obtain_query(query_directory=owl_class_name,
                                      owl_class_uri=resource_type_uri,
@@ -591,8 +591,7 @@ class QueryManager:
             username = None
         owl_class_name = kwargs["rdf_type_name"]
         resource_type_uri = kwargs["rdf_type_uri"]
-        kls = kwargs["kls"]
-        return kls, owl_class_name, resource_type_uri, username
+        return owl_class_name, resource_type_uri, username
 
     def dispatch_sparql_query(self, raw_sparql_query, request_args, return_format):
         query_metadata = gquery.get_metadata(raw_sparql_query, self.endpoint)

@@ -1,10 +1,8 @@
-import logging
+import unittest
 from typing import Dict
 
-import unittest
-
 from obasparql import QueryManager
-from obasparql.static import QUERIES_TYPES, QUERY_TYPE_GET_ALL_USER, QUERY_TYPE_GET_ONE_USER
+from obasparql.static import QUERY_TYPE_GET_ALL_USER, QUERY_TYPE_GET_ONE_USER
 from tests.settings import model_catalog_queries, model_catalog_context, model_catalog_endpoint, \
     model_catalog_graph_base, model_catalog_prefix
 
@@ -23,6 +21,7 @@ class TestQuery(unittest.TestCase):
 
         username = "mint@isi.edu"
         self.username = self.generate_graph(username)
+        self.email = username
 
     def test_get_all_with_pagination(self):
         """
@@ -58,7 +57,6 @@ class TestQuery(unittest.TestCase):
         results = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
                                                   query_type=query_type, request_args=grlc_request_args)
 
-
     def test_get_one(self):
         """
         Test to obtain one resource by the uri
@@ -78,7 +76,6 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(len(resource), 1)
         self.assertIn("ModelConfiguration", resource[0]['type'])
         self.assertEqual(resource[0]["id"], resource_uri)
-
 
     def test_get_one_setup_custom(self):
         """
@@ -100,6 +97,15 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(len(resource), 1)
         self.assertEqual(resource[0]["id"], resource_uri)
 
-
-if __name__ == '__main__':
-    unittest.main()
+    def test_get_resource_custom(self):
+        owl_class_uri = "https://w3id.org/okn/o/sdm#ModelConfigurationSetup"
+        owl_class_name = "ModelConfigurationSetup"
+        custom_query_name = "custom_modelconfigurationsetups"
+        username = self.email
+        _id = "https://w3id.org/okn/i/mint/cycles-0.9.4-alpha-simple-pongo"
+        response = self.query_manager.get_resource(id=_id,
+                                                   username=username,
+                                                   custom_query_name=custom_query_name,
+                                                   rdf_type_uri=owl_class_uri,
+                                                   rdf_type_name=owl_class_name)
+        assert response
