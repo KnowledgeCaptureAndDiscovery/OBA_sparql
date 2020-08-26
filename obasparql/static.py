@@ -19,6 +19,8 @@ LABEL_KEY = "label"
 PAGE_KEY = "page"
 PER_PAGE_KEY = "per_page"
 
+CUSTOM_QUERY_NAME = "custom_query_name"
+
 CONTEXT_KEY = "@context"
 CONTEXT_ID_KEY = "id"
 CONTEXT_TYPE_KEY = "type"

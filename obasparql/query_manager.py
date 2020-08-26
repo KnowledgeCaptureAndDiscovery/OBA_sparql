@@ -75,15 +75,15 @@ class QueryManager:
         try:
             context_json = "context.json"
             context_class_json = "context_class.json"
-            temp_context = json.loads(self.read_context(context_dir / context_json))[context_key]
-            tmp_context_class = json.loads(self.read_context(context_dir / context_class_json))[context_key]
+            temp_context = json.loads(self.read_context(context_dir / context_json))[CONTEXT_KEY]
+            tmp_context_class = json.loads(self.read_context(context_dir / context_class_json))[CONTEXT_KEY]
         except FileNotFoundError as e:
             logging.error(f"{e}")
             exit(1)
 
         try:
             context_overwrite_json = "context_overwrite.json"
-            self.context_overwrite = json.loads(self.read_context(context_dir / context_overwrite_json))[context_key]
+            self.context_overwrite = json.loads(self.read_context(context_dir / context_overwrite_json))[CONTEXT_KEY]
         except FileNotFoundError as e:
             self.context_overwrite = None
 
@@ -127,22 +127,20 @@ class QueryManager:
         """
 
         request_args: Dict[str, str] = {}
-        if "page" in kwargs:
-            request_args["page"] = kwargs["page"]
-        if "per_page" in kwargs:
-            request_args["per_page"] = kwargs["per_page"]
+        if PAGE_KEY in kwargs:
+            request_args[PAGE_KEY] = kwargs[PAGE_KEY]
+        if PER_PAGE_KEY in kwargs:
+            request_args[PER_PAGE_KEY] = kwargs[PER_PAGE_KEY]
 
-        if "custom_query_name" in kwargs:
-            query_type = kwargs["custom_query_name"]
+        if CUSTOM_QUERY_NAME in kwargs:
+            query_type = kwargs[CUSTOM_QUERY_NAME]
             return self.get_resource_custom(request_args=request_args, query_type=query_type, **kwargs)
         else:
             return self.get_resource_not_custom(request_args=request_args, **kwargs)
 
+        # CUSTOM
 
-        #CUSTOM
-
-
-        #NOT CUSTOM
+        # NOT CUSTOM
         ##GET_ONE
         ##GET_ONE_USER
 
@@ -161,9 +159,9 @@ class QueryManager:
             return self.get_one_resource(request_args=request_args, query_type=query_type, **kwargs)
         else:
 
-            if "label" in kwargs and kwargs["label"] is not None:
-                query_text = kwargs["label"]
-                request_args["label"] = query_text
+            if LABEL_KEY in kwargs and kwargs[LABEL_KEY] is not None:
+                query_text = kwargs[LABEL_KEY]
+                request_args[LABEL_KEY] = query_text
             return self.get_all_resource(request_args=request_args, query_type=query_type, **kwargs)
 
     def get_resource_not_custom(self, request_args, **kwargs):
@@ -180,14 +178,14 @@ class QueryManager:
             return self.get_one_resource(request_args=request_args, query_type=QUERY_TYPE_GET_ONE, **kwargs)
 
         elif ID_KEY not in kwargs:
-            if "label" in kwargs and kwargs["label"] is not None:
+            if LABEL_KEY in kwargs and kwargs[LABEL_KEY] is not None:
                 logging.warning("not supported")
             if USERNAME_KEY in kwargs:
                 return self.get_all_resource(request_args=request_args, query_type=QUERY_TYPE_GET_ALL_USER, **kwargs)
             elif USERNAME_KEY not in kwargs:
                 return self.get_all_resource(request_args=request_args, query_type=QUERY_TYPE_GET_ALL, **kwargs)
 
-    def get_one_resource(self, request_args, query_type="get_one_user", **kwargs):
+    def get_one_resource(self, request_args, query_type, **kwargs):
         """
         Handles a GET method to get one resource
         :param query_type:
@@ -491,8 +489,8 @@ class QueryManager:
         :rtype: string
         """
         query_template = getattr(self, query_directory)[query_type]
-        if "page" in request_args and "per_page" in request_args:
-            request_args["offset"] = (request_args["page"] - 1) * request_args["per_page"]
+        if PAGE_KEY in request_args and PER_PAGE_KEY in request_args:
+            request_args["offset"] = (request_args[PAGE_KEY] - 1) * request_args[PER_PAGE_KEY]
         try:
             result = self.dispatch_sparql_query(raw_sparql_query=query_template,
                                                 request_args=request_args,
@@ -629,8 +627,8 @@ class QueryManager:
                 logger.error("Parameters given: {} ".format(request_args))
                 raise e
         # Rewrite query using pagination
-        if "per_page" in request_args and "offset" in request_args:
-            rewritten_query = rewritten_query.replace("LIMIT 100", "LIMIT {}".format(request_args["per_page"]))
+        if PER_PAGE_KEY in request_args and "offset" in request_args:
+            rewritten_query = rewritten_query.replace("LIMIT 100", "LIMIT {}".format(request_args[PER_PAGE_KEY]))
             rewritten_query = rewritten_query.replace("OFFSET 0", "OFFSET {}".format(request_args["offset"]))
         logger.info(rewritten_query)
         sparql = SPARQLWrapper(self.endpoint)
