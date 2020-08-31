@@ -246,14 +246,8 @@ class QueryManager:
         else:
             return "Error inserting query", 407, {}
 
-    def delete_resource(self, **kwargs):
-        resource_uri = self.build_instance_uri(kwargs[ID_KEY])
-        try:
-            username = kwargs["user"]
-        except Exception:
-            logger.error("Missing username", exc_info=True)
-            return "Bad request: missing username", 400, {}
-
+    def delete_resource(self, username, resource_id):
+        resource_uri = resource_id
         request_args: Dict[str, str] = {
             "resource": resource_uri,
             "g": self.generate_graph(username),
@@ -261,29 +255,26 @@ class QueryManager:
         }
         return self.delete_query(request_args)
 
-    def post_resource(self, **kwargs):
+    def post_resource(self, username, body, rdf_type_uri):
         """
         Post a resource and generate the id
-        :param kwargs:
-        :type kwargs:
-        :return:
-        :rtype:
+        Args:
+            username: named graph where to do the insert
+            body: JSON to insert
+            rdf_type_uri: RDF Class where to insert the target instance described in body.
         """
-        body = kwargs["body"]
-        rdf_type_uri = kwargs["rdf_type_uri"]
-        if body.type and rdf_type_uri is not body.type:
-            body.type.append(rdf_type_uri)
+        if "type" in body and rdf_type_uri not in body["type"]:
+            body["type"].append(rdf_type_uri)
         else:
-            body.type = [rdf_type_uri]
-        body.id = generate_new_id()
-        logger.info("Inserting the resource: {}".format(body.id))
+            body["type"]= [rdf_type_uri]
+        if "id" in body:
+            # At the moment users cannot insert their own ids (except in complex resources).
+            # If we plan to support this, we would have to check the id does not exist.
+            logger.error("Resource already has an id")
+            return "Error inserting resource",407, {}
+        body["id"] = generate_new_id()
+        logger.info("Inserting the resource: {}".format(body["id"]))
 
-        try:
-            username = kwargs["user"]
-
-        except Exception as e:
-            logger.error("Missing username", exc_info=True)
-            return "Bad request: missing username", 400, {}
         self.traverse_obj(body, username)
 
         insert_response = self.insert_all_resources(body, username)
@@ -291,7 +282,7 @@ class QueryManager:
         if insert_response:
             return body, 201, {}
         else:
-            return "Error inserting query", 407, {}
+            return "Error inserting resource", 407, {}
 
     # SPARQL AND JSON LD METHODS
 
@@ -394,31 +385,51 @@ class QueryManager:
         Utils method to insert nested resources
         Parameters
         ----------
-        body :
-        username :
+        body : JSON with the resource (and nested resources) to insert
+        username : named graph where to insert the resource
 
         Returns
         -------
 
         '''
-        for key, value in body.__dict__.items():
-            if key != "openapi_types" and key != "attribute_map":
-                if isinstance(value, list):
-                    for inner_values in value:
-                        if not (isinstance(inner_values, primitives.__args__) or isinstance(inner_values, dict)):
-                            list_of_obj = self.get_all_complex_objects(inner_values, username)
-                            if len(list_of_obj) != 0:
-                                self.traverse_obj(inner_values, username)
+        for key, value in body.items():
+            # if key != "openapi_types" and key != "attribute_map": #not needed
+            if isinstance(value, list):
+                for inner_values in value:
+                    # if not (isinstance(inner_values, primitives.__args__) or isinstance(inner_values, dict)):
+                    if not (isinstance(inner_values, primitives.__args__)):
+                        self.process_dictionary(inner_values, username)
+            elif isinstance(value, dict):
+                self.process_dictionary(value, username)
 
-                            if inner_values.id == None:
-                                inner_values.id = generate_new_id()
-                                self.insert_all_resources(inner_values, username)
-                elif isinstance(value, dict):
-                    pass
+    def process_dictionary(self, dictionary, username):
+        list_of_obj = self.get_all_complex_objects(dictionary, username)
+        if len(list_of_obj) != 0:
+            self.traverse_obj(dictionary, username)
+        if "id" not in dictionary:
+            dictionary["id"] = generate_new_id()
+            self.insert_all_resources(dictionary, username)
+
+    def get_all_complex_objects(self, body, username):
+        l = []
+        for key, value in body.items():
+            # if key != "openapi_types" and key != "attribute_map": #not needed
+            if isinstance(value, list):
+                for inner_values in value:
+                    if not isinstance(inner_values, str):
+                        l.append(inner_values)
+            elif isinstance(value, dict):
+                l.append(value)
+        return l
 
     def prepare_jsonld(self, resource):
-        resource_dict = resource.to_dict()
-        resource_dict[ID_KEY] = self.build_instance_uri(resource_dict[ID_KEY])
+        if not isinstance(resource,Dict):
+            resource_dict = resource.to_dict()
+        else:
+            resource_dict = resource.copy()
+            # we return the id as a URI as part of the body
+            resource[ID_KEY] = resource_dict[ID_KEY] = self.build_instance_uri(resource_dict[ID_KEY])
+        resource_dict[ID_KEY] = resource[ID_KEY]
         resource_dict['@context'] = self.context["@context"]
         resource_json = json.dumps(resource_dict, default=str)
         return resource_json
@@ -452,7 +463,6 @@ class QueryManager:
         query_string = f'' \
                        f'DELETE WHERE {{ GRAPH <{request_args["g"]}> ' \
                        f'{{ <{request_args["resource"]}> ?p ?o . }} }}'
-
         try:
             glogger.info("deleting {}".format(request_args["resource"]))
             glogger.debug("deleting: {}".format(query_string))
@@ -489,19 +499,6 @@ class QueryManager:
             if not line.startswith('@prefix'):
                 triples.append(line)
         return prefixes, triples
-
-    def get_all_complex_objects(self, body, username):
-        l = []
-        for key, value in body.__dict__.items():
-            if key != "openapi_types" and key != "attribute_map":
-                if isinstance(value, list):
-                    # print(type(value[0]))
-                    for inner_values in value:
-                        if not isinstance(inner_values, str) and not isinstance(inner_values, dict):
-                            l.append(inner_values)
-                elif isinstance(value, dict):
-                    pass
-        return l
 
     # TODO: Refactoring as a utils method. Remove self param
     def convert_snake_dict(self, temp_context: Dict):
