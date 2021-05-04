@@ -10,7 +10,7 @@ matrix:
     python: '3.8'
 before_install:
   - docker pull mosorio/fuseki
-  - docker run -p 3030:3030 -e ADMIN_PASSWORD=admin mosorio/fuseki
+  - docker run -d -p 3030:3030 -e ADMIN_PASSWORD=admin mosorio/fuseki
 install:
   - pip install -U pip
   - pip install coverage
