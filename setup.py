@@ -45,7 +45,6 @@ setup(
         "validators==0.15.0",
         "pythonql3==0.9.61",
         "pyaml==18.11.0",
-        "rdflib-jsonld==0.6.2",
         "rdflib==6.0.2",
         "requests>=2.20.0",
         "simplejson==3.16.0",
