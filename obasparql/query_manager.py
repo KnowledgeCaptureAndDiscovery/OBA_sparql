@@ -5,17 +5,16 @@ from pathlib import Path
 from typing import Dict
 
 import validators
-from SPARQLWrapper import SPARQLWrapper, POST, JSONLD, DIGEST
 from SPARQLWrapper.SPARQLExceptions import EndPointInternalError, QueryBadFormed, Unauthorized, EndPointNotFound
 from pyld import jsonld
 from rdflib import Graph
-
+from rdflib.plugins.stores.sparqlconnector import SPARQLConnector
 from obasparql import gquery
 from obasparql.static import *
 from obasparql.utils import generate_new_id, primitives, convert_snake
 
 EMBED_OPTION = "@always"
-
+JSONLD='json-ld'
 glogger = logging.getLogger("grlc")
 logger = logging.getLogger('oba')
 
@@ -597,20 +596,22 @@ class QueryManager:
             rewritten_query = rewritten_query.replace("LIMIT 100", "LIMIT {}".format(request_args[PER_PAGE_KEY]))
             rewritten_query = rewritten_query.replace("OFFSET 0", "OFFSET {}".format(request_args["offset"]))
         logger.info(rewritten_query)
-        sparql = SPARQLWrapper(self.endpoint)
-        sparql.setQuery(rewritten_query)
-        sparql.setReturnFormat(return_format)
-        try:
-            return sparql.query().response.read()
-        except EndPointInternalError as e:
-            logger.error(e, exc_info=True)
-        except QueryBadFormed as e:
-            logger.error(e, exc_info=True)
-        except Unauthorized as e:
-            logger.error(e, exc_info=True)
-        except EndPointNotFound as e:
-            logger.error(e, exc_info=True)
-        raise Exception
+        
+        sparql = SPARQLConnector(self.endpoint)
+        response = sparql.query(rewritten_query)
+        result = response.serialize(format="json-ld")
+        return result
+        # try:
+        #     return sparql.query().response.read()
+        # except EndPointInternalError as e:
+        #     logger.error(e, exc_info=True)
+        # except QueryBadFormed as e:
+        #     logger.error(e, exc_info=True)
+        # except Unauthorized as e:
+        #     logger.error(e, exc_info=True)
+        # except EndPointNotFound as e:
+        #     logger.error(e, exc_info=True)
+        # raise Exception
 
 
 def merge(dict1, dict2):
