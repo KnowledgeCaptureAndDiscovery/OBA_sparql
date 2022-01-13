@@ -2,9 +2,6 @@ import json
 import logging
 import unittest
 from typing import Dict
-
-from SPARQLWrapper import JSONLD
-
 from obasparql.query_manager import QueryManager, QUERIES_TYPES
 from obasparql.utils import generate_uri
 from tests.settings import *
@@ -40,8 +37,7 @@ class TestQueryManager(unittest.TestCase):
     }
             '''
         results = self.query_manager.dispatch_sparql_query(raw_sparql_query=query_template,
-                                                           request_args={},
-                                                           return_format=JSONLD)
+                                                           request_args={})
         self.assertIsNotNone(json.loads(results))
 
 

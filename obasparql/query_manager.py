@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Dict
 
 import validators
-from SPARQLWrapper.SPARQLExceptions import EndPointInternalError, QueryBadFormed, Unauthorized, EndPointNotFound
 from pyld import jsonld
 from rdflib import Graph
 from rdflib.plugins.stores.sparqlconnector import SPARQLConnector
@@ -561,7 +560,7 @@ class QueryManager:
         resource_type_uri = kwargs["rdf_type_uri"]
         return owl_class_name, resource_type_uri, username
 
-    def dispatch_sparql_query(self, raw_sparql_query, request_args, return_format):
+    def dispatch_sparql_query(self, raw_sparql_query, request_args, return_format=JSONLD):
         query_metadata = gquery.get_metadata(raw_sparql_query, self.endpoint)
         rewritten_query = query_metadata['query']
         # Rewrite query using parameter values
