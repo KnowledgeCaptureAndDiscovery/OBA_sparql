@@ -49,7 +49,7 @@ setup(
         "requests>=2.20.0",
         "simplejson==3.16.0",
         "six==1.11.0",
-        "urllib3==1.24.3",
+        "urllib3==1.26.5",
         "webencodings==0.5.1",
         "werkzeug>=0.15.3",
         "PyLD==1.0.5",
