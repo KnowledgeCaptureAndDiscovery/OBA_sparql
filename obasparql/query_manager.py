@@ -342,15 +342,9 @@ class QueryManager:
             if "@id" in response_ld_with_context and '@graph' not in response_ld_with_context:
                 return []
 
-        endpoint_context = response_ld_with_context["@context"].copy(
-        ) if "@context" in response_ld_with_context else {}
-        if self.context_overwrite:
-            self.overwrite_endpoint_context(endpoint_context)
-
-        new_context = {**endpoint_context, **self.context['@context']}
+        new_context = self.context['@context']
         new_response = {"@graph": jsonld.expand(response_ld_with_context),
                         "@context": new_context}
-
         frame = {"@context": new_context, "@type": owl_class_uri}
 
         if owl_resource_iri is not None:
@@ -360,12 +354,13 @@ class QueryManager:
         for prop in frame["@context"].keys():
             if isinstance(frame["@context"][prop], dict):
                 frame["@context"][prop]["@container"] = "@set"
+                if "@type" in frame["@context"][prop] and frame["@context"][prop]['@type'] != "@id":
+                    frame["@context"][prop].pop("@type")
         if '@graph' in response_ld_with_context and 'id' in response_ld_with_context["@graph"]:
             del response_ld_with_context["@graph"][ID_KEY]
 
         if '@graph' in response_ld_with_context:
             logger.debug(json.dumps(response_ld_with_context["@graph"], indent=4))
-        logger.info(json.dumps(frame, indent=4))
         framed = jsonld.frame(new_response, frame, {"embed": ("%s" % EMBED_OPTION)})
         if '@graph' in framed:
             return framed['@graph']

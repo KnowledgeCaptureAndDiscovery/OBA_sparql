@@ -53,7 +53,6 @@ class TestFrame(unittest.TestCase):
             self.assertIsInstance(author, dict)
         for author in response[0]["hasContactPerson"]:
             self.assertIsInstance(author, dict)
-
-
+        assert 'operatingSystems' in response[0]
 if __name__ == '__main__':
     unittest.main()
