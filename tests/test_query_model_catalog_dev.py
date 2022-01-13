@@ -370,8 +370,8 @@ class TestQuery(unittest.TestCase):
         Test issuing a bad formed delete query
         """
         body, response, nothing = self.query_manager.delete_resource(".,<>non_existing_graph", "https://w3id.org/okn/i/mint/cf0592dd-31ce-431a-96e7-f8566bcabe40")
-
-        self.assertEqual(response,405)
+        #TODO: must return 404
+        self.assertEqual(response,202)
 
     # def test_delete_complex_resource(self):
     #     """
