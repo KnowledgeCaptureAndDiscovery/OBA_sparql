@@ -14,7 +14,7 @@ from obasparql.static import *
 from obasparql.utils import generate_new_id, primitives, convert_snake
 
 EMBED_OPTION = "@always"
-JSONLD='json-ld'
+JSONLD = 'json-ld'
 glogger = logging.getLogger("grlc")
 logger = logging.getLogger('oba')
 
@@ -51,6 +51,12 @@ class QueryManager:
         self.query_endpoint = f'{self.endpoint}/query'
         self.named_graph_base = named_graph_base
         self.uri_prefix = uri_prefix
+        self.sparql = SPARQLConnector(query_endpoint=self.endpoint,
+                                 update_endpoint=self.update_endpoint,
+                                 auth=(self.endpoint_username,
+                                 self.endpoint_password),
+                                 method="POST"
+                                 )
         queries_dir = Path(queries_dir)
         context_dir = Path(context_dir)
         default_dir = queries_dir / DEFAULT_DIR
@@ -74,14 +80,16 @@ class QueryManager:
             context_json = CONTEXT_FILE
             context_class_json = CONTEXT_CLASS_FILE
             temp_context = json.loads(self.read_context(context_dir / context_json))[CONTEXT_KEY]
-            tmp_context_class = json.loads(self.read_context(context_dir / context_class_json))[CONTEXT_KEY]
+            tmp_context_class = json.loads(self.read_context(
+                context_dir / context_class_json))[CONTEXT_KEY]
         except FileNotFoundError as e:
             logging.error(f"{e}")
             exit(1)
 
         try:
             context_overwrite_json = CONTEXT_OVERWRITE_CLASS_FILE
-            self.context_overwrite = json.loads(self.read_context(context_dir / context_overwrite_json))[CONTEXT_KEY]
+            self.context_overwrite = json.loads(self.read_context(
+                context_dir / context_overwrite_json))[CONTEXT_KEY]
         except FileNotFoundError as e:
             self.context_overwrite = None
 
@@ -265,12 +273,12 @@ class QueryManager:
         if "type" in body and rdf_type_uri not in body["type"]:
             body["type"].append(rdf_type_uri)
         else:
-            body["type"]= [rdf_type_uri]
+            body["type"] = [rdf_type_uri]
         if "id" in body:
             # At the moment users cannot insert their own ids (except in complex resources).
             # If we plan to support this, we would have to check the id does not exist.
             logger.error("Resource already has an id")
-            return "Error inserting resource",407, {}
+            return "Error inserting resource", 407, {}
         body["id"] = generate_new_id()
         logger.info("Inserting the resource: {}".format(body["id"]))
 
@@ -323,19 +331,6 @@ class QueryManager:
                 endpoint_context[key] = value
 
     def frame_results(self, resp, owl_class_uri, owl_resource_iri=None):
-        """
-        Generate the framed using the owl_class.
-        Frame the response and returns it.
-        :param resp: JSON response from SPARQL
-        :type resp: string
-        :param owl_class_uri: OWL class uri
-        :type owl_class: string
-        :return: Framed JSON
-        :rtype: string
-
-        Args:
-            owl_resource_iri ():
-        """
         try:
             response_ld_with_context = json.loads(resp)
         except Exception:
@@ -348,11 +343,12 @@ class QueryManager:
             if "@id" in response_ld_with_context and '@graph' not in response_ld_with_context:
                 return []
 
-        endpoint_context = response_ld_with_context["@context"].copy() if "@context" in response_ld_with_context else {}
+        endpoint_context = response_ld_with_context["@context"].copy(
+        ) if "@context" in response_ld_with_context else {}
         if self.context_overwrite:
             self.overwrite_endpoint_context(endpoint_context)
 
-        new_context = {**self.class_context, **endpoint_context}
+        new_context = {**endpoint_context, **self.context['@context']}
         new_response = {"@graph": jsonld.expand(response_ld_with_context),
                         "@context": new_context}
 
@@ -362,9 +358,9 @@ class QueryManager:
             frame['@id'] = owl_resource_iri
         frame["@context"]["type"] = "@type"
         frame["@context"][ID_KEY] = "@id"
-        for property in frame["@context"].keys():
-            if isinstance(frame["@context"][property], dict):
-                frame["@context"][property]["@container"] = "@set"
+        for prop in frame["@context"].keys():
+            if isinstance(frame["@context"][prop], dict):
+                frame["@context"][prop]["@container"] = "@set"
         if '@graph' in response_ld_with_context and 'id' in response_ld_with_context["@graph"]:
             del response_ld_with_context["@graph"][ID_KEY]
 
@@ -422,12 +418,13 @@ class QueryManager:
         return l
 
     def prepare_jsonld(self, resource):
-        if not isinstance(resource,Dict):
+        if not isinstance(resource, Dict):
             resource_dict = resource.to_dict()
         else:
             resource_dict = resource.copy()
             # we return the id as a URI as part of the body
-            resource[ID_KEY] = resource_dict[ID_KEY] = self.build_instance_uri(resource_dict[ID_KEY])
+            resource[ID_KEY] = resource_dict[ID_KEY] = self.build_instance_uri(
+                resource_dict[ID_KEY])
         resource_dict[ID_KEY] = resource[ID_KEY]
         resource_dict['@context'] = self.context["@context"]
         resource_json = json.dumps(resource_dict, default=str)
@@ -437,36 +434,23 @@ class QueryManager:
         query_string = f'{request_args["prefixes"]}' \
                        f'INSERT DATA {{ GRAPH <{request_args["g"]}> ' \
                        f'{{ {request_args["triples"]} }} }}'
-        sparql = SPARQLWrapper(self.update_endpoint)
-        self.set_authetication(sparql)
-        sparql.setMethod(POST)
+
+
         try:
-            sparql.setQuery(query_string)
-            glogger.debug("insert_query: {}".format(query_string))
-            sparql.query()
-        except:
+            self.sparql.update(query_string)
+        except Exception as err:
             glogger.error("Exception occurred", exc_info=True)
             return False
         return True
 
-    def set_authetication(self, sparql):
-        sparql.setHTTPAuth(DIGEST)
-        if self.endpoint_username and self.endpoint_password:
-            sparql.setCredentials(self.endpoint_username, self.endpoint_password)
-
     def delete_query(self, request_args):
-
-        sparql = SPARQLWrapper(self.update_endpoint)
-        self.set_authetication(sparql)
-        sparql.setMethod(POST)
         query_string = f'' \
                        f'DELETE WHERE {{ GRAPH <{request_args["g"]}> ' \
                        f'{{ <{request_args["resource"]}> ?p ?o . }} }}'
         try:
             glogger.info("deleting {}".format(request_args["resource"]))
             glogger.debug("deleting: {}".format(query_string))
-            sparql.setQuery(query_string)
-            sparql.query()
+            self.sparql.query(query_string)
         except Exception as e:
             glogger.error("Exception occurred", exc_info=True)
             return "Error delete query", 405, {}
@@ -478,12 +462,10 @@ class QueryManager:
             try:
                 glogger.info("deleting incoming relations {}".format(request_args["resource"]))
                 glogger.debug("deleting: {}".format(query_string_reverse))
-                sparql.setQuery(query_string_reverse)
-                sparql.query()
+                self.sparql.query(query_string_reverse)
             except Exception as e:
                 glogger.error("Exception occurred", exc_info=True)
                 return "Error delete query", 405, {}
-
         return "Deleted", 202, {}
 
     def get_insert_query(self, resource_json):
@@ -494,7 +476,7 @@ class QueryManager:
         for n in g.namespace_manager.namespaces():
             prefixes.append(f'PREFIX {n[0]}: <{n[1]}>')
 
-        for line in s.decode().split('\n'):
+        for line in s.split('\n'):
             if not line.startswith('@prefix'):
                 triples.append(line)
         return prefixes, triples
@@ -593,10 +575,12 @@ class QueryManager:
                 raise e
         # Rewrite query using pagination
         if PER_PAGE_KEY in request_args and "offset" in request_args:
-            rewritten_query = rewritten_query.replace("LIMIT 100", "LIMIT {}".format(request_args[PER_PAGE_KEY]))
-            rewritten_query = rewritten_query.replace("OFFSET 0", "OFFSET {}".format(request_args["offset"]))
+            rewritten_query = rewritten_query.replace(
+                "LIMIT 100", "LIMIT {}".format(request_args[PER_PAGE_KEY]))
+            rewritten_query = rewritten_query.replace(
+                "OFFSET 0", "OFFSET {}".format(request_args["offset"]))
         logger.info(rewritten_query)
-        
+
         sparql = SPARQLConnector(self.endpoint)
         response = sparql.query(rewritten_query)
         result = response.serialize(format="json-ld")
