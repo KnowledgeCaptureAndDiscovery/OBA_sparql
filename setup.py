@@ -45,7 +45,7 @@ setup(
         "validators==0.15.0",
         "pythonql3==0.9.61",
         "pyaml==18.11.0",
-        "rdflib==6.0.2",
+        "rdflib==6.1.1",
         "requests>=2.20.0",
         "simplejson==3.16.0",
         "six==1.11.0",
