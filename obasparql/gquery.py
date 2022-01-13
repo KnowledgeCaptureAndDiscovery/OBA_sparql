@@ -5,8 +5,12 @@
 # grlc, the git repository linked data API constructor, automatically builds Web APIs using SPARQL queries stored
 # in git repositories. http://grlc.io/
 
-import yaml
 import json
+from yaml import load, dump, parser, scanner
+try:
+    from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+    from yaml import Loader, Dumper
 from rdflib.plugins.sparql.parser import Query, UpdateUnit
 from rdflib.plugins.sparql.processor import translateQuery
 from pyparsing import ParseException
@@ -198,8 +202,8 @@ def get_yaml_decorators(rq):
         query_metadata = yaml_string
     elif type(yaml_string) == str:
         try:  # Invalid YAMLs will produce empty metadata
-            query_metadata = yaml.load(yaml_string)
-        except (yaml.parser.ParserError, yaml.scanner.ScannerError) as e:
+            query_metadata = load(yaml_string, Loader=Loader)
+        except (parser.ParserError, scanner.ScannerError) as e:
             try:
                 query_metadata = json.loads(yaml_string)
             except json.JSONDecodeError:

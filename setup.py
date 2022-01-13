@@ -45,15 +45,13 @@ setup(
         "validators==0.15.0",
         "pythonql3==0.9.61",
         "pyaml==18.11.0",
-        "rdflib-jsonld==0.4.0",
-        "rdflib==4.2.2",
+        "rdflib==6.0.2",
         "requests>=2.20.0",
         "simplejson==3.16.0",
         "six==1.11.0",
         "urllib3==1.24.3",
         "webencodings==0.5.1",
         "werkzeug>=0.15.3",
-        "SPARQLWrapperMosorio==1.8.6",
         "PyLD==1.0.5",
     ]
 )

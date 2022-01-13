@@ -3,7 +3,6 @@ import logging
 import unittest
 from typing import Dict
 
-from SPARQLWrapper import JSONLD
 
 from obasparql.query_manager import QueryManager, QUERIES_TYPES, QUERY_TYPE_GET_ONE_USER
 from obasparql.utils import generate_uri
@@ -41,8 +40,7 @@ class TestQueryManager(unittest.TestCase):
     }
             '''
         results = self.query_manager.dispatch_sparql_query(raw_sparql_query=query_template,
-                                                           request_args={},
-                                                           return_format=JSONLD)
+                                                           request_args={})
         self.assertIsNotNone(json.loads(results))
 
     def test_dispatch_sparqlquery_model_catalog(self):
@@ -64,8 +62,7 @@ class TestQueryManager(unittest.TestCase):
         query_template = getattr(self.query_manager, query_directory)[query_type]
 
         results = self.query_manager.dispatch_sparql_query(raw_sparql_query=query_template,
-                                                           request_args=request_args,
-                                                           return_format=JSONLD)
+                                                           request_args=request_args)
         self.assertIsNotNone(json.loads(results))
 
     def test_framed_get_one(self):
