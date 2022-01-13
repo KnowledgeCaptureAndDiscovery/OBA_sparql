@@ -52,7 +52,6 @@ setup(
         "urllib3==1.24.3",
         "webencodings==0.5.1",
         "werkzeug>=0.15.3",
-        "SPARQLWrapperMosorio==1.8.6",
         "PyLD==1.0.5",
     ]
 )
