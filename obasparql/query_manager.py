@@ -252,16 +252,17 @@ class QueryManager:
         else:
             return "Error inserting query", 407, {}
 
-    def delete_resource(self, username, resource_id):
-        resource_uri = resource_id
+    def delete_resource(self, id, user, rdf_type_uri=None, rdf_type_name=None, kls=None):
+        resource_uri = self.build_instance_uri(id)
         request_args: Dict[str, str] = {
             "resource": resource_uri,
-            "g": self.generate_graph(username),
+            "g": self.generate_graph(user),
             "delete_incoming_relations": True
         }
         return self.delete_query(request_args)
 
-    def post_resource(self, username, body, rdf_type_uri):
+
+    def post_resource(self, user, body, rdf_type_uri, rdf_type_name=None, kls=None):
         """
         Post a resource and generate the id
         Args:
@@ -281,9 +282,9 @@ class QueryManager:
         body["id"] = generate_new_id()
         logger.info("Inserting the resource: {}".format(body["id"]))
 
-        self.traverse_obj(body, username)
+        self.traverse_obj(body, user)
 
-        insert_response = self.insert_all_resources(body, username)
+        insert_response = self.insert_all_resources(body, user)
 
         if insert_response:
             return body, 201, {}
