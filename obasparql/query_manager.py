@@ -252,7 +252,7 @@ class QueryManager:
         else:
             return "Error inserting query", 407, {}
 
-    def delete_resource(self, id, user, rdf_type_uri, rdf_type_name, kls):
+    def delete_resource(self, id, user, rdf_type_uri=None, rdf_type_name=None, kls=None):
         resource_uri = self.build_instance_uri(id)
         request_args: Dict[str, str] = {
             "resource": resource_uri,
@@ -262,7 +262,7 @@ class QueryManager:
         return self.delete_query(request_args)
 
 
-    def post_resource(self, user, body, rdf_type_uri, rdf_type_name, kls):
+    def post_resource(self, user, body, rdf_type_uri, rdf_type_name=None, kls=None):
         """
         Post a resource and generate the id
         Args:
