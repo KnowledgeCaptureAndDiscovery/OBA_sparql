@@ -270,20 +270,12 @@ class QueryManager:
             body: JSON to insert
             rdf_type_uri: RDF Class where to insert the target instance described in body.
         """
-        if "type" in body and rdf_type_uri not in body["type"]:
-            body["type"].append(rdf_type_uri)
+        if body.type and rdf_type_uri is not body.type:
+            body.type.append(rdf_type_uri)
         else:
-            body["type"] = [rdf_type_uri]
-        if "id" in body:
-            # At the moment users cannot insert their own ids (except in complex resources).
-            # If we plan to support this, we would have to check the id does not exist.
-            logger.error("Resource already has an id")
-            return "Error inserting resource", 407, {}
-        body["id"] = generate_new_id()
-        logger.info("Inserting the resource: {}".format(body["id"]))
-
+            body.type = [rdf_type_uri]
+        body.id = generate_new_id()
         self.traverse_obj(body, user)
-
         insert_response = self.insert_all_resources(body, user)
 
         if insert_response:
@@ -382,47 +374,38 @@ class QueryManager:
         -------
 
         '''
-        for key, value in body.items():
-            # if key != "openapi_types" and key != "attribute_map": #not needed
-            if isinstance(value, list):
-                for inner_values in value:
-                    # if not (isinstance(inner_values, primitives.__args__) or isinstance(inner_values, dict)):
-                    if not (isinstance(inner_values, primitives.__args__)):
-                        self.process_dictionary(inner_values, username)
-            elif isinstance(value, dict):
-                self.process_dictionary(value, username)
+        for key, value in body.__dict__.items():
+            if key != "openapi_types" and key != "attribute_map":
+                if isinstance(value, list):
+                    for inner_values in value:
+                        if not (isinstance(inner_values, primitives.__args__) or isinstance(inner_values, dict)):
+                            list_of_obj = self.get_all_complex_objects(inner_values)
+                            if len(list_of_obj) != 0:
+                                self.traverse_obj(inner_values, username)
 
-    def process_dictionary(self, dictionary, username):
-        list_of_obj = self.get_all_complex_objects(dictionary, username)
-        if len(list_of_obj) != 0:
-            self.traverse_obj(dictionary, username)
-        if "id" not in dictionary:
-            dictionary["id"] = generate_new_id()
-            self.insert_all_resources(dictionary, username)
+                            if inner_values.id == None:
+                                inner_values.id = generate_new_id()
+                                self.insert_all_resources(inner_values, username)
+                elif isinstance(value, dict):
+                    pass
 
-    def get_all_complex_objects(self, body, username):
+    def get_all_complex_objects(self, body):
         l = []
-        for key, value in body.items():
-            # if key != "openapi_types" and key != "attribute_map": #not needed
-            if isinstance(value, list):
-                for inner_values in value:
-                    if not isinstance(inner_values, str):
-                        l.append(inner_values)
-            elif isinstance(value, dict):
-                l.append(value)
+        for key, value in body.__dict__.items():
+            if key != "openapi_types" and key != "attribute_map":
+                if isinstance(value, list):
+                    for inner_values in value:
+                        if not isinstance(inner_values, str) and not isinstance(inner_values, dict):
+                            l.append(inner_values)
+                elif isinstance(value, dict):
+                    pass
         return l
 
     def prepare_jsonld(self, resource):
-        if not isinstance(resource, Dict):
-            resource_dict = resource.to_dict()
-        else:
-            resource_dict = resource.copy()
-            # we return the id as a URI as part of the body
-            resource[ID_KEY] = resource_dict[ID_KEY] = self.build_instance_uri(
-                resource_dict[ID_KEY])
-        resource_dict[ID_KEY] = resource[ID_KEY]
-        resource_dict['@context'] = self.context["@context"]
-        resource_json = json.dumps(resource_dict, default=str)
+        resource_dict = resource.to_dict()
+        resource_dict["id"] = self.build_instance_uri(resource_dict["id"])
+        resource_dict['@context'] = self.context
+        resource_json = json.dumps(resource_dict)
         return resource_json
 
     def insert_query(self, request_args):
@@ -445,7 +428,7 @@ class QueryManager:
         try:
             glogger.info("deleting {}".format(request_args["resource"]))
             glogger.debug("deleting: {}".format(query_string))
-            self.sparql.query(query_string)
+            self.sparql.update(query_string)
         except Exception as e:
             glogger.error("Exception occurred", exc_info=True)
             return "Error delete query", 405, {}
@@ -457,7 +440,7 @@ class QueryManager:
             try:
                 glogger.info("deleting incoming relations {}".format(request_args["resource"]))
                 glogger.debug("deleting: {}".format(query_string_reverse))
-                self.sparql.query(query_string_reverse)
+                self.sparql.update(query_string_reverse)
             except Exception as e:
                 glogger.error("Exception occurred", exc_info=True)
                 return "Error delete query", 405, {}
