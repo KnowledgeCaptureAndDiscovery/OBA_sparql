@@ -52,6 +52,6 @@ setup(
         "urllib3==1.26.5",
         "webencodings==0.5.1",
         "werkzeug>=0.15.3",
-        "PyLD==1.0.5",
+        "PyLD>=2.0.3",
     ]
 )

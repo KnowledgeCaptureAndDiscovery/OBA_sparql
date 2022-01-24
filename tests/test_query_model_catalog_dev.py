@@ -40,6 +40,10 @@ class TestQuery(unittest.TestCase):
 
         results = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
                                                   query_type=query_type, request_args=grlc_request_args)
+        assert(results)
+        assert(results[0]['hasComponentLocation'])
+        assert(results[0]['hasComponentLocation'][0])
+        self.assertNotIn('type', results[0]['hasComponentLocation'][0])
 
     def test_get_all_with_pagination_dataset(self):
         """
@@ -56,6 +60,27 @@ class TestQuery(unittest.TestCase):
 
         results = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
                                                   query_type=query_type, request_args=grlc_request_args)
+        assert(results)
+
+
+    def test_get_one_parameter(self):
+        """
+        Test to obtain one resource by its uri
+        """
+        owl_class_name = "ModelConfiguration"
+        owl_class_uri = "https://w3id.org/okn/o/sd#Parameter"
+        resource_uri = "https://w3id.org/okn/i/mint/fd21cf17-f9b0-40d3-99b2-9ed2469c745f"
+        query_type = QUERY_TYPE_GET_ONE_USER
+
+        request_args: Dict[str, str] = {
+            "resource": resource_uri,
+            "g": self.usergraph
+        }
+
+        resource = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
+                                                   query_type=query_type, request_args=request_args)
+        self.assertIn("Parameter", resource['type'][0])
+        self.assertEqual(resource["id"], resource_uri)
 
     def test_get_one(self):
         """
@@ -73,9 +98,8 @@ class TestQuery(unittest.TestCase):
 
         resource = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
                                                    query_type=query_type, request_args=request_args)
-        self.assertEqual(len(resource), 1)
-        self.assertIn("ModelConfiguration", resource[0]['type'][1])
-        self.assertEqual(resource[0]["id"], resource_uri)
+        self.assertIn("ModelConfiguration", resource['type'])
+        self.assertEqual(resource["id"], resource_uri)
 
     def test_get_one_setup_custom(self):
         """
@@ -94,8 +118,7 @@ class TestQuery(unittest.TestCase):
 
         resource = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=resource_type_uri,
                                                    query_type=query_type, request_args=request_args)
-        self.assertEqual(len(resource), 1)
-        self.assertEqual(resource[0]["id"], resource_uri)
+        self.assertEqual(resource["id"], resource_uri)
 
     # def test_post_simple(self):
     #     """

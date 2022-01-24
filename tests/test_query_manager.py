@@ -60,7 +60,7 @@ class TestQueryManager(unittest.TestCase):
                                                                  owl_class_uri=owl_class_uri, query_type=query_type,
                                                                  request_args=request_args)
 
-        self.assertEqual(resource_uri, resource[0]["id"])
+        self.assertEqual(resource_uri, resource["id"])
 
     def test_dispatch_sparqlquery(self):
         endpoint = "http://dbpedia.org/sparql"
@@ -140,7 +140,7 @@ class TestQueryManager(unittest.TestCase):
 }'''
 
         framed = self.query_manager.frame_results(response, owl_class_uri, owl_resource_uri)
-        self.assertEqual(owl_resource_uri, framed[0]["id"])
+        self.assertEqual(owl_resource_uri, framed["id"])
 
     def test_framed_get_one_reflexive(self):
         owl_class_uri = "https://w3id.org/okn/o/sdm#Region"
@@ -177,7 +177,7 @@ class TestQueryManager(unittest.TestCase):
 '''
 
         framed = self.query_manager.frame_results(response, owl_class_uri, owl_resource_uri)
-        self.assertEqual(owl_resource_uri, framed[0]["id"])
+        self.assertEqual(owl_resource_uri, framed["id"])
 
 
 if __name__ == '__main__':

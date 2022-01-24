@@ -644,9 +644,9 @@
     },
     "operatingSystems": {
       "@container": "@set",
-      "@id": "https://w3id.org/okn/o/sd#operatingSystems",
-      "@type": "http://www.w3.org/2001/XMLSchema#string"
+      "@id": "https://w3id.org/okn/o/sd#operatingSystems"
     },
+
     "parameterAssignmentMethod": {
       "@container": "@set",
       "@id": "https://w3id.org/okn/o/sdm#parameterAssignmentMethod",

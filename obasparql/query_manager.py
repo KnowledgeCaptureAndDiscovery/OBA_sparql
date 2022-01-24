@@ -342,13 +342,14 @@ class QueryManager:
 
         if owl_resource_iri is not None:
             frame['@id'] = owl_resource_iri
-        frame["@context"]["type"] = "@type"
+        frame["@context"]["type"] = {
+            "@container": "@set",
+            "@id": "@type"
+        }
         frame["@context"][ID_KEY] = "@id"
         for prop in frame["@context"].keys():
             if isinstance(frame["@context"][prop], dict):
                 frame["@context"][prop]["@container"] = "@set"
-                if "@type" in frame["@context"][prop] and frame["@context"][prop]['@type'] != "@id":
-                    frame["@context"][prop].pop("@type")
         if '@graph' in response_ld_with_context and 'id' in response_ld_with_context["@graph"]:
             del response_ld_with_context["@graph"][ID_KEY]
 
@@ -358,8 +359,9 @@ class QueryManager:
         if '@graph' in framed:
             return framed['@graph']
         else:
-            return []
-
+            if '@context' in framed:
+                del framed['@context']
+            return framed
     # UPDATE METHODS
 
     def traverse_obj(self, body, username):

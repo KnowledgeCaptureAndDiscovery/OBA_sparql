@@ -49,10 +49,10 @@ class TestFrame(unittest.TestCase):
         response = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
                                                    query_type=query_type, request_args=request_args)
         self.assertTrue(response)
-        for author in response[0]["author"]:
+        for author in response["author"]:
             self.assertIsInstance(author, dict)
-        for author in response[0]["hasContactPerson"]:
+        for author in response["hasContactPerson"]:
             self.assertIsInstance(author, dict)
-        assert 'operatingSystems' in response[0]
+        assert 'operatingSystems' in response
 if __name__ == '__main__':
     unittest.main()

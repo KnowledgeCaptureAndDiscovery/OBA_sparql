@@ -73,9 +73,8 @@ class TestQuery(unittest.TestCase):
 
         resource = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
                                                    query_type=query_type, request_args=request_args)
-        self.assertEqual(len(resource), 1)
-        self.assertIn("ModelConfiguration", resource[0]['type'])
-        self.assertEqual(resource[0]["id"], resource_uri)
+        self.assertIn("ModelConfiguration", resource['type'])
+        self.assertEqual(resource['id'], resource_uri)
 
     def test_get_one_setup_custom(self):
         """
@@ -94,8 +93,7 @@ class TestQuery(unittest.TestCase):
 
         resource = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=resource_type_uri,
                                                    query_type=query_type, request_args=request_args)
-        self.assertEqual(len(resource), 1)
-        self.assertEqual(resource[0]["id"], resource_uri)
+        self.assertEqual(resource["id"], resource_uri)
 
     def test_get_resource_custom(self):
         owl_class_uri = "https://w3id.org/okn/o/sdm#ModelConfigurationSetup"
