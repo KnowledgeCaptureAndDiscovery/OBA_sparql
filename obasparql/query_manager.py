@@ -342,7 +342,10 @@ class QueryManager:
 
         if owl_resource_iri is not None:
             frame['@id'] = owl_resource_iri
-        frame["@context"]["type"] = "@type"
+        frame["@context"]["type"] = {
+            "@container": "@set",
+            "@id": "@type"
+        }
         frame["@context"][ID_KEY] = "@id"
         for prop in frame["@context"].keys():
             if isinstance(frame["@context"][prop], dict):
