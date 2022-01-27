@@ -134,6 +134,8 @@ class QueryManager:
         if ID_KEY in kwargs:
             return self.get_one_resource(request_args=request_args, query_type=query_type, **kwargs)
         else:
+            if "label" in kwargs and kwargs["label"] is not None:
+                request_args["label"] = kwargs["label"]
             return self.get_all_resource(request_args=request_args, query_type=query_type, **kwargs)
 
     def get_resource_not_custom(self, request_args, **kwargs):
