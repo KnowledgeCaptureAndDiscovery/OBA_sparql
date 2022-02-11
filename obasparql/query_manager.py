@@ -7,7 +7,7 @@ from typing import Dict
 import validators
 from pyld import jsonld
 from rdflib import Graph
-from rdflib.plugins.stores.sparqlconnector import SPARQLConnector
+from obasparql.sparqlconnector import SPARQLConnector
 from obasparql import gquery
 from obasparql.static import *
 from obasparql.utils import generate_new_id, primitives, convert_snake
@@ -51,11 +51,12 @@ class QueryManager:
         self.named_graph_base = named_graph_base
         self.uri_prefix = uri_prefix
         self.sparql = SPARQLConnector(query_endpoint=self.endpoint,
-                                 update_endpoint=self.update_endpoint,
-                                 auth=(self.endpoint_username,
-                                 self.endpoint_password),
-                                 method="POST"
-                                 )
+                                      update_endpoint=self.update_endpoint,
+                                      auth=(self.endpoint_username,
+                                            self.endpoint_password),
+                                      method="POST",
+                                      returnFormat='json-ld'
+                                      )
         queries_dir = Path(queries_dir)
         context_dir = Path(context_dir)
         default_dir = queries_dir / DEFAULT_DIR
@@ -263,7 +264,6 @@ class QueryManager:
         }
         return self.delete_query(request_args)
 
-
     def post_resource(self, user, body, rdf_type_uri, rdf_type_name=None, kls=None):
         """
         Post a resource and generate the id
@@ -337,10 +337,7 @@ class QueryManager:
             if "@id" in response_ld_with_context and '@graph' not in response_ld_with_context:
                 return []
 
-        new_context = self.context['@context']
-        new_response = {"@graph": jsonld.expand(response_ld_with_context),
-                        "@context": new_context}
-        frame = {"@context": new_context, "@type": owl_class_uri}
+        frame = {"@context": response_ld_with_context['@context'], "@type": owl_class_uri}
 
         if owl_resource_iri is not None:
             frame['@id'] = owl_resource_iri
@@ -357,7 +354,7 @@ class QueryManager:
 
         if '@graph' in response_ld_with_context:
             logger.debug(json.dumps(response_ld_with_context["@graph"], indent=4))
-        framed = jsonld.frame(new_response, frame, {"embed": ("%s" % EMBED_OPTION)})
+        framed = jsonld.frame(response_ld_with_context, frame, {"embed": ("%s" % EMBED_OPTION)})
         if '@graph' in framed:
             return framed['@graph']
         else:
@@ -416,7 +413,6 @@ class QueryManager:
         query_string = f'{request_args["prefixes"]}' \
                        f'INSERT DATA {{ GRAPH <{request_args["g"]}> ' \
                        f'{{ {request_args["triples"]} }} }}'
-
 
         try:
             self.sparql.update(query_string)
@@ -562,11 +558,7 @@ class QueryManager:
             rewritten_query = rewritten_query.replace(
                 "OFFSET 0", "OFFSET {}".format(request_args["offset"]))
         logger.info(rewritten_query)
-
-        sparql = SPARQLConnector(self.endpoint)
-        response = sparql.query(rewritten_query)
-        result = response.serialize(format="json-ld")
-        return result
+        return self.sparql.query(rewritten_query)
         # try:
         #     return sparql.query().response.read()
         # except EndPointInternalError as e:
