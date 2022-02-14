@@ -496,9 +496,9 @@ class QueryManager:
         framed = jsonld.frame(
             {
                 "@graph": response_graph,
-                "context": response_context
+                "@context": response_context
             }, frame, {"embed": (f"{EMBED_OPTION}")})
-            
+
         if '@graph' in framed:
             return framed['@graph']
         else:
