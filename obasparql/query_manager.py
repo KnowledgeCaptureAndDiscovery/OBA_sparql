@@ -12,7 +12,7 @@ from obasparql import gquery
 from obasparql.static import *
 from obasparql.utils import generate_new_id, primitives, convert_snake
 
-EMBED_OPTION = "@always"
+EMBED_OPTION = "@once"
 JSONLD = 'json-ld'
 glogger = logging.getLogger("grlc")
 logger = logging.getLogger('oba')
