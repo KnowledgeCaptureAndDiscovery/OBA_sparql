@@ -207,7 +207,8 @@ class QueryManager:
         : return:
         : rtype:
         """
-        owl_class_name, resource_type_uri, username = self.parse_request_arguments(**kwargs)
+        owl_class_name, resource_type_uri, username = self.parse_request_arguments(
+            **kwargs)
         request_args[SPARQL_ID_TYPE_VARIABLE] = self.build_instance_uri(
             kwargs[ID_KEY])
         request_args[SPARQL_GRAPH_TYPE_VARIABLE] = self.generate_graph(
@@ -228,7 +229,8 @@ class QueryManager:
         : return:
         : rtype:
         """
-        owl_class_name, resource_type_uri, username = self.parse_request_arguments(**kwargs)
+        owl_class_name, resource_type_uri, username = self.parse_request_arguments(
+            **kwargs)
         request_args[SPARQL_QUERY_TYPE_VARIABLE] = resource_type_uri
         request_args[SPARQL_GRAPH_TYPE_VARIABLE] = self.generate_graph(
             username)
@@ -416,8 +418,7 @@ class QueryManager:
                                       1) * request_args[PER_PAGE_KEY]
         try:
             result = self.dispatch_sparql_query(
-                raw_sparql_query=query_template,
-                request_args=request_args)
+                raw_sparql_query=query_template, request_args=request_args)
         except Exception as e:
             raise e
 
@@ -461,7 +462,17 @@ class QueryManager:
             if "@id" in response_dict and '@graph' not in response_dict:
                 return []
 
-        frame = {"@context": response_dict['@context'], "@type": owl_class_uri}
+        if '@context' in response_dict:
+            response_context = response_dict['@context']
+        else:
+            response_context = {}
+
+        if '@graph' in response_dict:
+            response_graph = response_dict['@graph']
+        else:
+            response_graph = {}
+
+        frame = {"@context": response_context, "@type": owl_class_uri}
         # if owl_resource_iri is set, the user is requesting a specific resource and we must add it to the frame
         if owl_resource_iri is not None:
             frame['@id'] = owl_resource_iri
@@ -475,18 +486,19 @@ class QueryManager:
                 frame["@context"][prop]["@container"] = "@set"
 
         #TODO: I don't know why but the following line is needed to avoid the error:
-        if '@graph' in response_dict and 'id' in response_dict["@graph"]:
-            del response_dict["@graph"][ID_KEY]
+        if 'id' in response_graph:
+            del response_graph[ID_KEY]
 
         # Context (returned by the endpoint) does not contain information about the classes
         # so we must add it to the frame
         frame["@context"] = {**self.class_context, **frame["@context"]}
 
-        if '@graph' in response_dict:
-            logger.debug(json.dumps(response_dict["@graph"], indent=4))
-
-        framed = jsonld.frame(response_dict, frame,
-                              {"embed": (f"{EMBED_OPTION}")})
+        framed = jsonld.frame(
+            {
+                "@graph": response_graph,
+                "context": response_context
+            }, frame, {"embed": (f"{EMBED_OPTION}")})
+            
         if '@graph' in framed:
             return framed['@graph']
         else:
@@ -746,7 +758,7 @@ class QueryManager:
 
         Returns:
             dict: JSON-LD response
-        """        
+        """
 
         query_metadata = gquery.get_metadata(raw_sparql_query, self.endpoint)
         rewritten_query = query_metadata['query']
