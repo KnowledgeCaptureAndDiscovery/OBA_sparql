@@ -480,7 +480,7 @@ class QueryManager:
 
         # Context (returned by the endpoint) does not contain information about the classes
         # so we must add it to the frame
-        frame["@context"] = {**self.class_context, **framed["@context"]}
+        frame["@context"] = {**self.class_context, **frame["@context"]}
 
         if '@graph' in response_dict:
             logger.debug(json.dumps(response_dict["@graph"], indent=4))
