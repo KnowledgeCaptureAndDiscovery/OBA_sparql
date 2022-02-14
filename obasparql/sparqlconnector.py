@@ -2,12 +2,8 @@ import logging
 from typing import Optional, TYPE_CHECKING, Tuple
 from urllib.request import urlopen, Request
 from urllib.parse import urlencode
-from urllib.error import HTTPError, URLError
+from urllib.error import HTTPError 
 import base64
-
-from io import BytesIO
-
-from rdflib.query import Result
 from rdflib import BNode
 
 log = logging.getLogger(__name__)
@@ -60,12 +56,12 @@ class SPARQLConnector(object):
             if type(auth) != tuple:
                 raise SPARQLConnectorException("auth must be a tuple")
             if len(auth) != 2:
-                raise SPARQLConnectorException("auth must be a tuple (user, password)")
+                raise SPARQLConnectorException(
+                    "auth must be a tuple (user, password)")
             base64string = base64.b64encode(bytes("%s:%s" % auth, "ascii"))
             self.kwargs.setdefault("headers", {})
             self.kwargs["headers"].update(
-                {"Authorization": "Basic %s" % base64string.decode("utf-8")}
-            )
+                {"Authorization": "Basic %s" % base64string.decode("utf-8")})
 
     @property
     def method(self):
@@ -75,12 +71,12 @@ class SPARQLConnector(object):
     def method(self, method):
         if method not in ("GET", "POST", "POST_FORM"):
             raise SPARQLConnectorException(
-                'Method must be "GET", "POST", or "POST_FORM"'
-            )
+                'Method must be "GET", "POST", or "POST_FORM"')
 
         self._method = method
 
     def query(self, query, default_graph: str = None, named_graph: str = None):
+        
         if not self.query_endpoint:
             raise SPARQLConnectorException("Query endpoint not set!")
 
@@ -105,14 +101,15 @@ class SPARQLConnector(object):
             qsa = "?" + urlencode(args["params"])
             try:
                 res = urlopen(
-                    Request(self.query_endpoint + qsa, headers=args["headers"])
-                )
+                    Request(self.query_endpoint + qsa,
+                            headers=args["headers"]))
             except Exception as e:
                 raise ValueError(
                     "You did something wrong formulating either the URI or your SPARQL query"
                 )
         elif self.method == "POST":
-            args["headers"].update({"Content-Type": "application/sparql-query"})
+            args["headers"].update(
+                {"Content-Type": "application/sparql-query"})
             qsa = "?" + urlencode(params)
             try:
                 res = urlopen(
@@ -120,8 +117,7 @@ class SPARQLConnector(object):
                         self.query_endpoint + qsa,
                         data=query.encode(),
                         headers=args["headers"],
-                    )
-                )
+                    ))
             except HTTPError as e:
                 return e.code, str(e), None
         elif self.method == "POST_FORM":
@@ -133,8 +129,7 @@ class SPARQLConnector(object):
                         self.query_endpoint,
                         data=urlencode(args["params"]).encode(),
                         headers=args["headers"],
-                    )
-                )
+                    ))
             except HTTPError as e:
                 return e.code, str(e), None
         else:
@@ -147,6 +142,16 @@ class SPARQLConnector(object):
         default_graph: Optional[str] = None,
         named_graph: Optional[str] = None,
     ):
+        """Method to send a SPARQL update query to the endpoint.
+
+        Args:
+            query (str): the query to send to the endpoint
+            default_graph (Optional[str], optional): The default named graph. Defaults to None.
+            named_graph (Optional[str], optional): The named graph. Defaults to None.
+
+        Raises:
+            SPARQLConnectorException: Connection error
+        """
         if not self.update_endpoint:
             raise SPARQLConnectorException("Query endpoint not set!")
 
@@ -172,7 +177,6 @@ class SPARQLConnector(object):
 
         qsa = "?" + urlencode(args["params"])
         res = urlopen(
-            Request(
-                self.update_endpoint + qsa, data=query.encode(), headers=args["headers"]
-            )
-        )
+            Request(self.update_endpoint + qsa,
+                    data=query.encode(),
+                    headers=args["headers"]))
