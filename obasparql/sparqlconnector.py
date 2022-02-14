@@ -2,7 +2,7 @@ import logging
 from typing import Optional, TYPE_CHECKING, Tuple
 from urllib.request import urlopen, Request
 from urllib.parse import urlencode
-from urllib.error import HTTPError 
+from urllib.error import HTTPError
 import base64
 from rdflib import BNode
 
@@ -76,7 +76,7 @@ class SPARQLConnector(object):
         self._method = method
 
     def query(self, query, default_graph: str = None, named_graph: str = None):
-        
+
         if not self.query_endpoint:
             raise SPARQLConnectorException("Query endpoint not set!")
 
