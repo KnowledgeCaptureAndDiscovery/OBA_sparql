@@ -23,6 +23,14 @@
     "intervalValue": {
         "@id": "https://w3id.org/okn/o/sdm#intervalValue",
         "@container": "@set"
+    },
+    "hasDimensionality": {
+        "@id": "https://w3id.org/okn/o/sd#hasDimensionality",
+        "@container": "@set"
+    },
+    "position": {
+        "@id": "https://w3id.org/okn/o/sd#position",
+        "@container": "@set"
     }
   }
 }

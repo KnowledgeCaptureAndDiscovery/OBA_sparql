@@ -108,9 +108,8 @@ class QueryManager:
 
         try:
             context_overwrite_json = CONTEXT_OVERWRITE_CLASS_FILE
-            self.context_overwrite = json.loads(
-                self.read_context(context_dir /
-                                  context_overwrite_json))[CONTEXT_KEY]
+            context_overwrite_path = context_dir / context_overwrite_json
+            self.context_overwrite = json.loads(self.read_context(context_overwrite_path))[CONTEXT_KEY]
         except FileNotFoundError as e:
             self.context_overwrite = None
 
@@ -491,6 +490,7 @@ class QueryManager:
 
         # Context (returned by the endpoint) does not contain information about the classes
         # so we must add it to the frame
+        self.overwrite_endpoint_context(frame["@context"])
         frame["@context"] = {**self.class_context, **frame["@context"]}
 
         framed = jsonld.frame(
