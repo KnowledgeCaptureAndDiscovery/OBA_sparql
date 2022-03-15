@@ -33,7 +33,7 @@ SKIP_ID_FRAMING_KEY = "skip_id_framing"
 
 CONTEXT_FILE = "context.json"
 CONTEXT_CLASS_FILE = "context_class.json"
-CONTEXT_OVERWRITE_CLASS_FILE = "context_class.json"
+CONTEXT_OVERWRITE_CLASS_FILE = "context_overwrite.json"
 
 #Directory where the default queries are
 DEFAULT_DIR = "_default_"
