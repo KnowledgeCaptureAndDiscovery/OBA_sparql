@@ -80,6 +80,7 @@ class TestQuery(unittest.TestCase):
         resource = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
                                                    query_type=query_type, request_args=request_args)
         self.assertIn("Parameter", resource['type'][0])
+        self.assertIn("position", resource['type'][0])
         self.assertEqual(resource["id"], resource_uri)
 
     def test_get_one(self):
