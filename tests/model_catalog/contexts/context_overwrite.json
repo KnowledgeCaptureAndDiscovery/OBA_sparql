@@ -1,0 +1,36 @@
+{
+  "@context": {
+    "hasDefaultValue": {
+      "@id": "https://w3id.org/okn/o/sd#hasDefaultValue",
+      "@container": "@set"
+    },
+    "hasFixedValue": {
+        "@id": "https://w3id.org/okn/o/sd#hasFixedValue",
+        "@container": "@set"
+    },
+    "hasMaximumAcceptedValue": {
+        "@id": "https://w3id.org/okn/o/sd#hasMaximumAcceptedValue",
+        "@container": "@set"
+    },
+    "hasMinimumAcceptedValue": {
+        "@id": "https://w3id.org/okn/o/sd#hasMinimumAcceptedValue",
+        "@container": "@set"
+    },
+    "value": {
+        "@id": "https://w3id.org/okn/o/sd#value",
+        "@container": "@set"
+    },
+    "intervalValue": {
+        "@id": "https://w3id.org/okn/o/sdm#intervalValue",
+        "@container": "@set"
+    },
+    "hasDimensionality": {
+        "@id": "https://w3id.org/okn/o/sd#hasDimensionality",
+        "@container": "@set"
+    },
+    "position": {
+        "@id": "https://w3id.org/okn/o/sd#position",
+        "@container": "@set"
+    }
+  }
+}
