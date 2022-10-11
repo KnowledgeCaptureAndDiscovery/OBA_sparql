@@ -422,10 +422,13 @@ class QueryManager:
             raise e
 
         logger.debug("response: {}".format(result))
-        if "resource" in request_args and not skip_id_framing:
-            return self.frame_results(result, owl_class_uri,
-                                      request_args["resource"])
-        return self.frame_results(result, owl_class_uri)
+        try:
+            if "resource" in request_args and not skip_id_framing:
+                return self.frame_results(result, owl_class_uri,
+                                        request_args["resource"])
+            return self.frame_results(result, owl_class_uri)
+        except Exception as e:
+            raise e
 
     def overwrite_endpoint_context(self, endpoint_context: dict):
         """Overwrite the endpoint context
@@ -455,7 +458,8 @@ class QueryManager:
             response_dict = json.loads(response)
         except Exception:
             glogger.error("json serialize failed", exc_info=True)
-            return []
+            raise Exception("json serialize failed")
+            
         if len(response_dict) == 0:
             #Fuseki sometimes return a json with graph and something not...
             if "@id" in response_dict and '@graph' not in response_dict:
