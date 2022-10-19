@@ -298,9 +298,8 @@ class QueryManager:
             dict: The response of the request as JSON format
         """
         resource_uri = self.build_instance_uri(kwargs[ID_KEY])
-        body = kwargs["body"]
-        body.id = resource_uri
-
+        body = kwargs["body"].dict()
+        body["id"] = resource_uri            
         try:
             username = kwargs["user"]
         except Exception:
@@ -379,7 +378,8 @@ class QueryManager:
             body.type.append(rdf_type_uri)
         else:
             body.type = [rdf_type_uri]
-        body.id = generate_new_id()
+        body = body.dict()
+        body[ID_KEY] = generate_new_id()
         self.traverse_obj(body, user)
         insert_response = self.insert_all_resources(body, user)
 
@@ -524,7 +524,7 @@ class QueryManager:
         -------
 
         '''
-        for key, value in body.__dict__.items():
+        for key, value in body.items():
             if key != "openapi_types" and key != "attribute_map":
                 if isinstance(value, list):
                     for inner_values in value:
@@ -574,7 +574,7 @@ class QueryManager:
         Returns:
             dict: The resource in JSON-LD
         """
-        resource_dict = resource.to_dict()
+        resource_dict = resource
         resource_dict["id"] = self.build_instance_uri(resource_dict["id"])
         resource_dict['@context'] = self.context
         resource_json = json.dumps(resource_dict)
@@ -592,8 +592,8 @@ class QueryManager:
         query_string = f'{request_args["prefixes"]}' \
               f'INSERT DATA {{ GRAPH <{request_args["g"]}> ' \
               f'{{ {request_args["triples"]} }} }}'
-
         try:
+            print(query_string)
             self.sparql.update(query_string)
         except Exception as err:
             glogger.error("Exception occurred", exc_info=True)
@@ -779,11 +779,14 @@ class QueryManager:
                 logger.error("Parameters given: {} ".format(request_args))
                 raise e
         # Rewrite query using pagination
+        print(request_args)
         if PER_PAGE_KEY in request_args and "offset" in request_args:
+            print("here")
             rewritten_query = rewritten_query.replace(
                 "LIMIT 100", "LIMIT {}".format(request_args[PER_PAGE_KEY]))
             rewritten_query = rewritten_query.replace(
                 "OFFSET 0", "OFFSET {}".format(request_args["offset"]))
+        print(rewritten_query)
         logger.info(rewritten_query)
         return self.sparql.query(rewritten_query)
 
