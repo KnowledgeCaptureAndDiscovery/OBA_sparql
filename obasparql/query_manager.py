@@ -289,7 +289,7 @@ class QueryManager:
                                      request_args=request_args)
         except Exception as e:
             logger.error(e, exc_info=True)
-            return "Bad request error", 500, {}
+            return "Bad request error"
 
     def put_resource(self, **kwargs):
         """Handle a PUT method to update a resource
@@ -304,7 +304,7 @@ class QueryManager:
             username = kwargs["user"]
         except Exception:
             logger.error("Missing username", exc_info=True)
-            return "Bad request: missing username", 400, {}
+            return "Bad request: missing username"
 
         # DELETE QUERY
         request_args_delete: Dict[str, str] = {
@@ -317,7 +317,7 @@ class QueryManager:
             self.delete_query(request_args_delete)
         except:
             logger.error("Exception occurred", exc_info=True)
-            return "Error deleting query", 407, {}
+            return "Error deleting query"
 
         # INSERT QUERY
         body_json = self.json_to_jsonld(body)
@@ -331,9 +331,9 @@ class QueryManager:
             "g": self.generate_graph(username)
         }
         if self.insert_query(request_args=request_args):
-            return body, 201, {}
+            return body
         else:
-            return "Error inserting query", 407, {}
+            return "Error inserting query"
 
     def delete_resource(self,
                         id: str,
@@ -384,7 +384,7 @@ class QueryManager:
         insert_response = self.insert_all_resources(body, user)
 
         if insert_response:
-            return body, 201, {}
+            return body
         else:
             return "Error inserting resource", 407, {}
 
@@ -618,7 +618,7 @@ class QueryManager:
             self.sparql.update(query_string)
         except Exception as e:
             glogger.error("Exception occurred", exc_info=True)
-            return "Error delete query", 405, {}
+            return "Error delete query"
 
         if request_args["delete_incoming_relations"]:
             query_string_reverse = f'' \
@@ -631,8 +631,8 @@ class QueryManager:
                 self.sparql.update(query_string_reverse)
             except Exception as e:
                 glogger.error("Exception occurred", exc_info=True)
-                return "Error delete query", 405, {}
-        return "Deleted", 202, {}
+                return "Error delete query"
+        return "Deleted"
 
     def get_insert_query(self, resource_json: str):
         """Convert the JSON-LD to triple to be inserted"""
