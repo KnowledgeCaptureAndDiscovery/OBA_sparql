@@ -473,7 +473,7 @@ class QueryManager:
         if '@graph' in response_dict:
             response_graph = response_dict['@graph']
         else:
-            response_graph = {}
+            response_graph = response_dict
 
         frame = {"@context": response_context, "@type": owl_class_uri}
         # if owl_resource_iri is set, the user is requesting a specific resource and we must add it to the frame
