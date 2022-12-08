@@ -42,6 +42,8 @@ class Query(Enum):
     GET_ALL = ("get_all")
 
 
+EMBED_OPTION = "@always"
+JSONLD = 'json-ld'
 
 XSD_DATATYPES = ["decimal", "float", "double", "integer", "positiveInteger", "negativeInteger", "nonPositiveInteger",
                  "nonNegativeInteger", "long", "int", "short", "byte", "unsignedLong", "unsignedInt", "unsignedShort",

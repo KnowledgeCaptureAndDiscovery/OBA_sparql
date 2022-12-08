@@ -36,7 +36,7 @@ class TestQueryManager(unittest.TestCase):
             "g": graph_user
         }
 
-        resource = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
+        resource = self.query_manager.run_query_get(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
                                                    query_type=query_type, request_args=request_args)
 
         self.assertTrue(resource)
@@ -56,7 +56,7 @@ class TestQueryManager(unittest.TestCase):
             "g": graph_user
         }
 
-        resource = self.query_manager.obtain_query(query_directory=owl_class_name,
+        resource = self.query_manager.run_query_get(query_directory=owl_class_name,
                                                                  owl_class_uri=owl_class_uri, query_type=query_type,
                                                                  request_args=request_args)
 

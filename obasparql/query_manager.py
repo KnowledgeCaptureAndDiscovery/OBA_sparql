@@ -1,3 +1,4 @@
+from http.client import HTTPException
 import json
 import logging.config
 import os
@@ -9,14 +10,12 @@ from pyld import jsonld
 from rdflib import Graph
 from obasparql.sparqlconnector import SPARQLConnector
 from obasparql import gquery
-from obasparql.static import *
+from obasparql.static import CONTEXT_ID_KEY, CONTEXT_OVERWRITE_CLASS_FILE, CONTEXT_TYPE_KEY, CUSTOM_QUERY_NAME, DEFAULT_DIR, ID_KEY, PAGE_KEY, PER_PAGE_KEY, QUERY_TYPE_GET_ONE, QUERY_TYPE_GET_ONE_USER, QUERY_TYPE_GET_ALL, \
+    CONTEXT_FILE, CONTEXT_CLASS_FILE, CONTEXT_KEY, SPARQL_QUERY_TYPE_VARIABLE, USERNAME_KEY, QUERY_TYPE_GET_ALL_USER, SPARQL_ID_TYPE_VARIABLE, SPARQL_GRAPH_TYPE_VARIABLE, SKIP_ID_FRAMING_KEY, EMBED_OPTION, JSONLD, XSD_DATATYPES
 from obasparql.utils import generate_new_id, primitives, convert_snake
 
-EMBED_OPTION = "@always"
-JSONLD = 'json-ld'
 glogger = logging.getLogger("grlc")
 logger = logging.getLogger('oba')
-
 
 def remove_jsonld_key(tmp_context_class, key):
     """Remove json key from context
@@ -102,15 +101,15 @@ class QueryManager:
             tmp_context_class = json.loads(
                 self.read_context(context_dir /
                                   context_class_json))[CONTEXT_KEY]
-        except FileNotFoundError as e:
-            logging.error(f"{e}")
+        except FileNotFoundError:
+            logging.error("The context file does not exists", exc_info=True)
             exit(1)
 
         try:
             context_overwrite_json = CONTEXT_OVERWRITE_CLASS_FILE
             context_overwrite_path = context_dir / context_overwrite_json
             self.context_overwrite = json.loads(self.read_context(context_overwrite_path))[CONTEXT_KEY]
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             self.context_overwrite = {}
 
         remove_jsonld_key(tmp_context_class, CONTEXT_TYPE_KEY)
@@ -146,6 +145,120 @@ class QueryManager:
             return self.get_resource_not_custom(request_args=request_args,
                                                 **kwargs)
 
+    def put_resource(self,
+                      user,
+                      body,
+                      rdf_type_uri,
+                      rdf_type_name=None,
+                      kls=None):
+        """Handle a PUT method to update a resource
+
+        Returns:
+            dict: The response of the request as JSON format
+        """
+        resource_uri = self.build_instance_uri(rdf_type_uri)
+        body = body.dict()
+        body["id"] = resource_uri            
+        try:
+            username = user 
+        except Exception as err:
+            logger.error("Missing username", exc_info=True)
+            raise(HTTPException(status_code=400, detail="Bad request: missing username")) from err
+
+
+        try:
+            if not self.get_resource(id=body[ID_KEY], user=username, rdf_type_uri=rdf_type_uri, rdf_type_name=rdf_type_name, kls=kls):
+                raise HTTPException(status_code=404, detail="Resource not found")
+        except Exception as err:
+            raise HTTPException(status_code=500, detail="Error while retrieving the resource") from err
+
+        # DELETE QUERY
+        request_args_delete: Dict[str, str] = {
+            "resource": resource_uri,
+            "g": self.generate_graph(username),
+            "delete_incoming_relations": False
+        }
+
+        try:
+            self.run_query_delete(request_args_delete)
+        except Exception as err:
+            raise HTTPException(status_code=500, detail=str(err)) from err
+
+        # INSERT QUERY
+        body_json = self.json_to_jsonld(body)
+        prefixes, triples = self.build_query_insert(body_json)
+        prefixes = '\n'.join(prefixes)
+        triples = '\n'.join(triples)
+
+        request_args: Dict[str, str] = {
+            "prefixes": prefixes,
+            "triples": triples,
+            "g": self.generate_graph(username)
+        }
+        try:
+            self.run_query_insert(request_args=request_args)
+        except Exception as err:
+            raise HTTPException(status_code=500, detail=str(err)) from err
+
+        try:
+            self.get_resource(id=body[ID_KEY], user=username, rdf_type_uri=rdf_type_uri, rdf_type_name=rdf_type_name, kls=kls)
+        except Exception as err:
+            raise HTTPException(status_code=500, detail="Error while retrieving the resource") from err
+            
+    def delete_resource(self,
+                        id: str,
+                        user: str,
+                        rdf_type_uri: str = None,
+                        rdf_type_name: str = None,
+                        kls: str = None) -> dict:
+        """Handle a DELETE method to delete a resource
+
+        Args:
+            id (str): the resource id
+            user (str): the user who is deleting the resource
+            rdf_type_uri (str, optional): The rdf type uri of the resource. Defaults to None.
+            rdf_type_name (str, optional): The class name of the resource. Defaults to None.
+            kls (str, optional): TODO: I don't remember. Defaults to None.
+
+        Returns:
+            dict: The response of the request as JSON format
+        """
+        resource_uri = self.build_instance_uri(id)
+        request_args: Dict[str, str] = {
+            "resource": resource_uri,
+            "g": self.generate_graph(user),
+            "delete_incoming_relations": True
+        }
+        try:
+            self.run_query_delete(request_args)
+        except Exception as err:
+            raise HTTPException(status_code=500, detail=str(err)) from err
+        return "Deleted"
+
+    def post_resource(self,
+                      user,
+                      body,
+                      rdf_type_uri,
+                      rdf_type_name=None,
+                      kls=None):
+        """
+        Post a resource and generate the id
+        Args:
+            username: named graph where to do the insert
+            body: JSON to insert
+            rdf_type_uri: RDF Class where to insert the target instance described in body.
+        """
+        if body.type and rdf_type_uri is not body.type:
+            body.type.append(rdf_type_uri)
+        else:
+            body.type = [rdf_type_uri]
+        body = body.dict()
+        body[ID_KEY] = generate_new_id()
+        self.traverse_obj(body, user)
+        self.insert_all_resources(body, user)
+        return body
+
+    # Helper get methods
     def get_resource_custom(self, request_args, **kwargs):
         """
         Prepare request for custom queries
@@ -173,13 +286,13 @@ class QueryManager:
         : param kwargs:
         : return:
         """
-        if ID_KEY in kwargs and USERNAME_KEY in kwargs:
+        if ID_KEY in kwargs:
+            if USERNAME_KEY in kwargs:
+                query_type = QUERY_TYPE_GET_ONE_USER
+            else:
+                query_type = QUERY_TYPE_GET_ONE
             return self.get_one_resource(request_args=request_args,
-                                         query_type=QUERY_TYPE_GET_ONE_USER,
-                                         **kwargs)
-        elif ID_KEY in kwargs and USERNAME_KEY not in kwargs:
-            return self.get_one_resource(request_args=request_args,
-                                         query_type=QUERY_TYPE_GET_ONE,
+                                         query_type=query_type,
                                          **kwargs)
 
         elif ID_KEY not in kwargs:
@@ -187,13 +300,11 @@ class QueryManager:
             # if LABEL_KEY in kwargs and kwargs[LABEL_KEY] is not None:
             # logging.warning("not supported")
             if USERNAME_KEY in kwargs:
-                return self.get_all_resource(
-                    request_args=request_args,
-                    query_type=QUERY_TYPE_GET_ALL_USER,
-                    **kwargs)
+                query_type = QUERY_TYPE_GET_ALL_USER
             elif USERNAME_KEY not in kwargs:
-                return self.get_all_resource(request_args=request_args,
-                                             query_type=QUERY_TYPE_GET_ALL,
+                query_type = QUERY_TYPE_GET_ALL
+            return self.get_all_resource(request_args=request_args,
+                                             query_type=query_type,
                                              **kwargs)
 
     def get_one_resource(self, request_args, query_type, **kwargs):
@@ -214,8 +325,11 @@ class QueryManager:
             username)
         skip_id_framing = True if SKIP_ID_FRAMING_KEY in kwargs and kwargs[
             SKIP_ID_FRAMING_KEY] else False
-        return self.request_one(owl_class_name, request_args,
-                                resource_type_uri, query_type, skip_id_framing)
+        return self.run_query_get(query_directory=owl_class_name,
+                                     owl_class_uri=resource_type_uri,
+                                     query_type=query_type,
+                                     request_args=request_args,
+                                     skip_id_framing=skip_id_framing)
 
     def get_all_resource(self, request_args, query_type, **kwargs):
         """
@@ -233,164 +347,14 @@ class QueryManager:
         request_args[SPARQL_QUERY_TYPE_VARIABLE] = resource_type_uri
         request_args[SPARQL_GRAPH_TYPE_VARIABLE] = self.generate_graph(
             username)
-        return self.request_all(owl_class_name, request_args,
-                                resource_type_uri, query_type)
-
-    # TODO: Merge request_one and request_all
-    def request_one(self,
-                    owl_class_name: str,
-                    request_args: dict,
-                    resource_type_uri: str,
-                    query_type: str,
-                    skip_id_framing: bool = False) -> dict:
-        """Implements the request for one resource
-
-        Args:
-            owl_class_name (str): The name of the class
-            request_args (dict): Contains the values of the variables of the SPARQL query.
-            resource_type_uri (str): The uri of the class
-            query_type (str): Indicates the type of query
-            skip_id_framing (bool, optional): Request must be False Defaults to False.
-
-        Returns:
-            dict: The response of the request as JSON format
-        """
-        try:
-            return self.obtain_query(query_directory=owl_class_name,
-                                     owl_class_uri=resource_type_uri,
-                                     query_type=query_type,
-                                     request_args=request_args,
-                                     skip_id_framing=skip_id_framing)
-        except:
-            logger.error("Exception occurred", exc_info=True)
-            return "Bad request", 500, {}
-
-    #TODO: the query_type is hardcoded. It should be passed as a parameter
-    def request_all(self,
-                    owl_class_name: str,
-                    request_args: dict,
-                    resource_type_uri: str,
-                    query_type="get_all_user") -> dict:
-        """Implements the request for resources
-
-        Args:
-            owl_class_name (str): The name of the class
-            request_args (dict): Contains the values of the variables of the SPARQL query.
-            resource_type_uri (str): The uri of the class
-            query_type (str, optional): Indicates the query type. Defaults to "get_all_user".
-
-        Returns:
-            [type]: [description]
-        """
-        try:
-            return self.obtain_query(query_directory=owl_class_name,
-                                     owl_class_uri=resource_type_uri,
-                                     query_type=query_type,
-                                     request_args=request_args)
-        except Exception as e:
-            logger.error(e, exc_info=True)
-            return "Bad request error"
-
-    def put_resource(self, **kwargs):
-        """Handle a PUT method to update a resource
-
-        Returns:
-            dict: The response of the request as JSON format
-        """
-        resource_uri = self.build_instance_uri(kwargs[ID_KEY])
-        body = kwargs["body"].dict()
-        body["id"] = resource_uri            
-        try:
-            username = kwargs["user"]
-        except Exception:
-            logger.error("Missing username", exc_info=True)
-            return "Bad request: missing username"
-
-        # DELETE QUERY
-        request_args_delete: Dict[str, str] = {
-            "resource": resource_uri,
-            "g": self.generate_graph(username),
-            "delete_incoming_relations": False
-        }
-
-        try:
-            self.delete_query(request_args_delete)
-        except:
-            logger.error("Exception occurred", exc_info=True)
-            return "Error deleting query"
-
-        # INSERT QUERY
-        body_json = self.json_to_jsonld(body)
-        prefixes, triples = self.get_insert_query(body_json)
-        prefixes = '\n'.join(prefixes)
-        triples = '\n'.join(triples)
-
-        request_args: Dict[str, str] = {
-            "prefixes": prefixes,
-            "triples": triples,
-            "g": self.generate_graph(username)
-        }
-        if self.insert_query(request_args=request_args):
-            return body
-        else:
-            return "Error inserting query"
-
-    def delete_resource(self,
-                        id: str,
-                        user: str,
-                        rdf_type_uri: str = None,
-                        rdf_type_name: str = None,
-                        kls: str = None) -> dict:
-        """Handle a DELETE method to delete a resource
-
-        Args:
-            id (str): the resource id
-            user (str): the user who is deleting the resource
-            rdf_type_uri (str, optional): The rdf type uri of the resource. Defaults to None.
-            rdf_type_name (str, optional): The class name of the resource. Defaults to None.
-            kls (str, optional): TODO: I don't remember. Defaults to None.
-
-        Returns:
-            dict: The response of the request as JSON format
-        """
-        resource_uri = self.build_instance_uri(id)
-        request_args: Dict[str, str] = {
-            "resource": resource_uri,
-            "g": self.generate_graph(user),
-            "delete_incoming_relations": True
-        }
-        return self.delete_query(request_args)
-
-    def post_resource(self,
-                      user,
-                      body,
-                      rdf_type_uri,
-                      rdf_type_name=None,
-                      kls=None):
-        """
-        Post a resource and generate the id
-        Args:
-            username: named graph where to do the insert
-            body: JSON to insert
-            rdf_type_uri: RDF Class where to insert the target instance described in body.
-        """
-        if body.type and rdf_type_uri is not body.type:
-            body.type.append(rdf_type_uri)
-        else:
-            body.type = [rdf_type_uri]
-        body = body.dict()
-        body[ID_KEY] = generate_new_id()
-        self.traverse_obj(body, user)
-        insert_response = self.insert_all_resources(body, user)
-
-        if insert_response:
-            return body
-        else:
-            return "Error inserting resource", 407, {}
+        return self.run_query_get(query_directory=owl_class_name,
+                                owl_class_uri=resource_type_uri,
+                                query_type=query_type,
+                                request_args=request_args)
 
     # SPARQL AND JSON LD METHODS
 
-    def obtain_query(self,
+    def run_query_get(self,
                      query_directory,
                      owl_class_uri,
                      query_type,
@@ -418,17 +382,17 @@ class QueryManager:
         try:
             result = self.dispatch_sparql_query(
                 raw_sparql_query=query_template, request_args=request_args)
-        except Exception as e:
-            raise e
+        except Exception as exception: 
+            raise HTTPException(status_code=500, detail="Unable to send query") from exception
 
-        logger.debug("response: {}".format(result))
+        logger.debug("response: %s", result)
         try:
             if "resource" in request_args and not skip_id_framing:
                 return self.frame_results(result, owl_class_uri,
                                         request_args["resource"])
             return self.frame_results(result, owl_class_uri)
-        except Exception as e:
-            raise e
+        except Exception as exception:
+            raise HTTPException(status_code=500, detail="Unable to frame the results") from exception
 
     def overwrite_endpoint_context(self, endpoint_context: dict):
         """Overwrite the endpoint context
@@ -456,9 +420,9 @@ class QueryManager:
         """
         try:
             response_dict = json.loads(response)
-        except Exception:
-            glogger.error("json serialize failed", exc_info=True)
-            raise Exception("json serialize failed")
+        except Exception as exception:
+            logger.error("json serialize failed", exc_info=True)
+            raise exception 
             
         if len(response_dict) == 0:
             #Fuseki sometimes return a json with graph and something not...
@@ -580,27 +544,24 @@ class QueryManager:
         resource_json = json.dumps(resource_dict)
         return resource_json
 
-    def insert_query(self, request_args: dict) -> bool:
+    ## RUN QUERY METHODS
+
+    def run_query_insert(self, request_args: dict):
         """Generate the insert query
 
         Args:
             request_args (dict): The request arguments (from the request)
 
-        Returns:
-            bool: True if the query was generated successfully, False otherwise
         """
         query_string = f'{request_args["prefixes"]}' \
               f'INSERT DATA {{ GRAPH <{request_args["g"]}> ' \
               f'{{ {request_args["triples"]} }} }}'
         try:
-            print(query_string)
             self.sparql.update(query_string)
         except Exception as err:
-            glogger.error("Exception occurred", exc_info=True)
-            return False
-        return True
+            raise err
 
-    def delete_query(self, request_args: str):
+    def run_query_delete(self, request_args: str):
         """Delete a resource
 
         Args:
@@ -613,28 +574,25 @@ class QueryManager:
               f'DELETE WHERE {{ GRAPH <{request_args["g"]}> ' \
               f'{{ <{request_args["resource"]}> ?p ?o . }} }}'
         try:
-            glogger.info("deleting {}".format(request_args["resource"]))
-            glogger.debug("deleting: {}".format(query_string))
+            logger.info("deleting %s", request_args["resource"])
+            logger.debug("deleting: %s", query_string)
             self.sparql.update(query_string)
         except Exception as e:
-            glogger.error("Exception occurred", exc_info=True)
-            return "Error delete query"
+            logger.error("Exception occurred", exc_info=True)
+            raise e
 
         if request_args["delete_incoming_relations"]:
             query_string_reverse = f'' \
                     f'DELETE WHERE {{ GRAPH <{request_args["g"]}> ' \
                     f'{{ ?s ?p <{request_args["resource"]}>  }} }}'
             try:
-                glogger.info("deleting incoming relations {}".format(
-                    request_args["resource"]))
-                glogger.debug("deleting: {}".format(query_string_reverse))
+                logger.info("deleting incoming relations %s", request_args["resource"])
+                logger.debug("deleting: %s", query_string_reverse)
                 self.sparql.update(query_string_reverse)
             except Exception as e:
-                glogger.error("Exception occurred", exc_info=True)
-                return "Error delete query"
-        return "Deleted"
+                raise e
 
-    def get_insert_query(self, resource_json: str):
+    def build_query_insert(self, resource_json: str):
         """Convert the JSON-LD to triple to be inserted"""
         prefixes = []
         triples = []
@@ -650,6 +608,7 @@ class QueryManager:
                 triples.append(line)
         return prefixes, triples
 
+    ## UTILS METHODS
     # TODO: Refactoring as a utils method. Remove self param
     def convert_snake_dict(self, temp_context: Dict):
         """
@@ -724,7 +683,7 @@ class QueryManager:
 
     def insert_all_resources(self, body, username):
         body_json = self.json_to_jsonld(body)
-        prefixes, triples = self.get_insert_query(body_json)
+        prefixes, triples = self.build_query_insert(body_json)
         prefixes = '\n'.join(prefixes)
         triples = '\n'.join(triples)
         request_args: Dict[str, str] = {
@@ -732,8 +691,7 @@ class QueryManager:
             "triples": triples,
             "g": self.generate_graph(username)
         }
-        insert_response = self.insert_query(request_args=request_args)
-        return insert_response
+        self.run_query_insert(request_args=request_args)
 
     @staticmethod
     def parse_request_arguments(**kwargs) -> Tuple[str, str, str]:
@@ -773,24 +731,15 @@ class QueryManager:
                 rewritten_query = gquery.rewrite_query(
                     query_metadata['original_query'],
                     query_metadata['parameters'], request_args)
-            except Exception as e:
-                logger.error("Parameters expected: {} ".format(
-                    query_metadata['parameters']))
-                logger.error("Parameters given: {} ".format(request_args))
-                raise e
-        # Rewrite query using pagination
-        print(request_args)
+            except Exception as exception:
+                logger.error("Parameters expected: %s",  query_metadata['parameters'])
+                logger.error("Parameters given %s ", request_args)
+                raise exception
+
         if PER_PAGE_KEY in request_args and "offset" in request_args:
-            print("here")
             rewritten_query = rewritten_query.replace(
                 "LIMIT 100", "LIMIT {}".format(request_args[PER_PAGE_KEY]))
             rewritten_query = rewritten_query.replace(
                 "OFFSET 0", "OFFSET {}".format(request_args["offset"]))
-        print(rewritten_query)
         logger.info(rewritten_query)
         return self.sparql.query(rewritten_query)
-
-
-def merge(dict1, dict2):
-    res = {**dict1, **dict2}
-    return res

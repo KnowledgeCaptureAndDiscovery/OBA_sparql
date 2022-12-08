@@ -1,11 +1,10 @@
 import json
+import unittest
 import logging.config
 from typing import Dict
 
 from obasparql.utils import generate_uri
-import unittest
-from obasparql.query_manager import QueryManager, QUERIES_TYPES, QUERY_TYPE_GET_ONE_USER
-
+from obasparql.query_manager import QUERY_TYPE_GET_ONE_USER
 from obasparql import QueryManager
 from tests.settings import *
 
