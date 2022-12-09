@@ -17,6 +17,7 @@ from obasparql.utils import generate_new_id, primitives, convert_snake
 glogger = logging.getLogger("grlc")
 logger = logging.getLogger('fastapi')
 
+
 def remove_jsonld_key(tmp_context_class, key):
     """Remove json key from context
 
@@ -108,7 +109,8 @@ class QueryManager:
         try:
             context_overwrite_json = CONTEXT_OVERWRITE_CLASS_FILE
             context_overwrite_path = context_dir / context_overwrite_json
-            self.context_overwrite = json.loads(self.read_context(context_overwrite_path))[CONTEXT_KEY]
+            self.context_overwrite = json.loads(
+                self.read_context(context_overwrite_path))[CONTEXT_KEY]
         except FileNotFoundError:
             self.context_overwrite = {}
 
@@ -140,19 +142,13 @@ class QueryManager:
 
         if CUSTOM_QUERY_NAME in kwargs:
             response = self.get_resource_custom(request_args=request_args,
-                                            **kwargs)
+                                                **kwargs)
         else:
             response = self.get_resource_not_custom(request_args=request_args,
-                                                **kwargs)
+                                                    **kwargs)
         return response
 
-    def put_resource(self,
-                id,
-                user,
-                body,
-                rdf_type_uri,
-                rdf_type_name=None,
-                kls=None):
+    def put_resource(self, id, user, body, rdf_type_uri, rdf_type_name=None, kls=None):
         """Handle a PUT method to update a resource
 
         Returns:
@@ -160,14 +156,16 @@ class QueryManager:
         """
         resource_uri = self.build_instance_uri(id)
         body = body.dict()
-        body["id"] = resource_uri            
+        body["id"] = resource_uri
         try:
-            username = user 
+            username = user
         except Exception as err:
             logger.error("Missing username", exc_info=True)
-            raise HTTPException(status_code=400, detail="Bad request: missing username") from err
+            raise HTTPException(
+                status_code=400, detail="Bad request: missing username") from err
 
-        response = self.get_resource(id=id, username=username, rdf_type_uri=rdf_type_uri, rdf_type_name=rdf_type_name, kls=kls)
+        response = self.get_resource(
+            id=id, username=username, rdf_type_uri=rdf_type_uri, rdf_type_name=rdf_type_name, kls=kls)
         # DELETE QUERY
         request_args_delete: Dict[str, str] = {
             "resource": resource_uri,
@@ -195,12 +193,14 @@ class QueryManager:
 
         # GET QUERY
         try:
-            response = self.get_resource(id=id, username=username, rdf_type_uri=rdf_type_uri, rdf_type_name=rdf_type_name, kls=kls)
+            response = self.get_resource(
+                id=id, username=username, rdf_type_uri=rdf_type_uri, rdf_type_name=rdf_type_name, kls=kls)
             return response
         except Exception as err:
             logger.error("Error while retrieving the resource", exc_info=True)
-            raise HTTPException(status_code=500, detail="Error while retrieving the resource") from err
-            
+            raise HTTPException(
+                status_code=500, detail="Error while retrieving the resource") from err
+
     def delete_resource(self,
                         id: str,
                         user: str,
@@ -227,10 +227,12 @@ class QueryManager:
         }
         # GET QUERY
         try:
-            response = self.get_resource(id=resource_uri, username=user, rdf_type_uri=rdf_type_uri, rdf_type_name=rdf_type_name, kls=kls)
+            response = self.get_resource(
+                id=resource_uri, username=user, rdf_type_uri=rdf_type_uri, rdf_type_name=rdf_type_name, kls=kls)
         except Exception as err:
             logger.error("Error while retrieving the resource", exc_info=True)
-            raise HTTPException(status_code=500, detail="Error while retrieving the resource") from err
+            raise HTTPException(
+                status_code=500, detail="Error while retrieving the resource") from err
 
         if not response:
             logger.error("Error while retrieving the resource", exc_info=True)
@@ -309,8 +311,8 @@ class QueryManager:
             elif USERNAME_KEY not in kwargs:
                 query_type = QUERY_TYPE_GET_ALL
             return self.get_all_resource(request_args=request_args,
-                                             query_type=query_type,
-                                             **kwargs)
+                                         query_type=query_type,
+                                         **kwargs)
 
     def get_one_resource(self, request_args, query_type, **kwargs):
         """
@@ -331,10 +333,10 @@ class QueryManager:
         skip_id_framing = True if SKIP_ID_FRAMING_KEY in kwargs and kwargs[
             SKIP_ID_FRAMING_KEY] else False
         return self.run_query_get(query_directory=owl_class_name,
-                                     owl_class_uri=resource_type_uri,
-                                     query_type=query_type,
-                                     request_args=request_args,
-                                     skip_id_framing=skip_id_framing)
+                                  owl_class_uri=resource_type_uri,
+                                  query_type=query_type,
+                                  request_args=request_args,
+                                  skip_id_framing=skip_id_framing)
 
     def get_all_resource(self, request_args, query_type, **kwargs):
         """
@@ -353,18 +355,18 @@ class QueryManager:
         request_args[SPARQL_GRAPH_TYPE_VARIABLE] = self.generate_graph(
             username)
         return self.run_query_get(query_directory=owl_class_name,
-                                owl_class_uri=resource_type_uri,
-                                query_type=query_type,
-                                request_args=request_args)
+                                  owl_class_uri=resource_type_uri,
+                                  query_type=query_type,
+                                  request_args=request_args)
 
     # SPARQL AND JSON LD METHODS
 
     def run_query_get(self,
-                     query_directory,
-                     owl_class_uri,
-                     query_type,
-                     request_args=None,
-                     skip_id_framing=False):
+                      query_directory,
+                      owl_class_uri,
+                      query_type,
+                      request_args=None,
+                      skip_id_framing=False):
         """Generate the query, dispatch it to the SPARQL endpoint, frame it and return the response
 
         Args:
@@ -387,7 +389,7 @@ class QueryManager:
         try:
             result = self.dispatch_sparql_query(
                 raw_sparql_query=query_template, request_args=request_args)
-        except Exception as err: 
+        except Exception as err:
             logger.error("Unable to send query: %s", err)
             raise HTTPException(status_code=500, detail="Unable to send query") from err
 
@@ -398,10 +400,11 @@ class QueryManager:
         try:
             if "resource" in request_args and not skip_id_framing:
                 return self.frame_results(result, owl_class_uri,
-                                        request_args["resource"])
+                                          request_args["resource"])
             return self.frame_results(result, owl_class_uri)
         except Exception as err:
-            raise HTTPException(status_code=500, detail="Unable to frame the results") from err
+            raise HTTPException(
+                status_code=500, detail="Unable to frame the results") from err
 
     def overwrite_endpoint_context(self, endpoint_context: dict):
         """Overwrite the endpoint context
@@ -431,10 +434,10 @@ class QueryManager:
             response_dict = json.loads(response)
         except Exception as exception:
             logger.error("json serialize failed", exc_info=True)
-            raise exception 
-            
+            raise exception
+
         if len(response_dict) == 0:
-            #Fuseki sometimes return a json with graph and something not...
+            # Fuseki sometimes return a json with graph and something not...
             if "@id" in response_dict and '@graph' not in response_dict:
                 return []
 
@@ -461,7 +464,7 @@ class QueryManager:
             if isinstance(frame["@context"][prop], dict):
                 frame["@context"][prop]["@container"] = "@set"
 
-        #TODO: I don't know why but the following line is needed to avoid the error:
+        # TODO: I don't know why but the following line is needed to avoid the error:
         if 'id' in response_graph:
             del response_graph[ID_KEY]
 
@@ -553,7 +556,7 @@ class QueryManager:
         resource_json = json.dumps(resource_dict)
         return resource_json
 
-    ## RUN QUERY METHODS
+    # RUN QUERY METHODS
 
     def run_query_insert(self, request_args: dict):
         """Generate the insert query
@@ -563,8 +566,8 @@ class QueryManager:
 
         """
         query_string = f'{request_args["prefixes"]}' \
-              f'INSERT DATA {{ GRAPH <{request_args["g"]}> ' \
-              f'{{ {request_args["triples"]} }} }}'
+            f'INSERT DATA {{ GRAPH <{request_args["g"]}> ' \
+            f'{{ {request_args["triples"]} }} }}'
         try:
             self.sparql.update(query_string)
         except Exception as err:
@@ -582,8 +585,8 @@ class QueryManager:
             [type]: A tuple (message, http_code, response)
         """
         query_string = f'' \
-              f'DELETE WHERE {{ GRAPH <{request_args["g"]}> ' \
-              f'{{ <{request_args["resource"]}> ?p ?o . }} }}'
+            f'DELETE WHERE {{ GRAPH <{request_args["g"]}> ' \
+            f'{{ <{request_args["resource"]}> ?p ?o . }} }}'
         try:
             logger.info("deleting %s", request_args["resource"])
             logger.debug("deleting: %s", query_string)
@@ -594,15 +597,16 @@ class QueryManager:
 
         if request_args["delete_incoming_relations"]:
             query_string_reverse = f'' \
-                    f'DELETE WHERE {{ GRAPH <{request_args["g"]}> ' \
-                    f'{{ ?s ?p <{request_args["resource"]}>  }} }}'
+                f'DELETE WHERE {{ GRAPH <{request_args["g"]}> ' \
+                f'{{ ?s ?p <{request_args["resource"]}>  }} }}'
             try:
                 logger.info("deleting incoming relations %s", request_args["resource"])
                 logger.debug("deleting: %s", query_string_reverse)
                 self.sparql.update(query_string_reverse)
             except Exception as exception:
                 logger.error("Exception occurred", exc_info=True)
-                raise HTTPException(status_code=500, detail=str(exception)) from exception
+                raise HTTPException(
+                    status_code=500, detail=str(exception)) from exception
 
     def build_query_insert(self, resource_json: str):
         """Convert the JSON-LD to triple to be inserted"""
@@ -620,7 +624,7 @@ class QueryManager:
                 triples.append(line)
         return prefixes, triples
 
-    ## UTILS METHODS
+    # UTILS METHODS
     # TODO: Refactoring as a utils method. Remove self param
     def convert_snake_dict(self, temp_context: Dict):
         """
