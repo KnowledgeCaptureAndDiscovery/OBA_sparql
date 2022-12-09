@@ -4,7 +4,8 @@ import unittest
 from typing import Dict
 
 
-from obasparql.query_manager import QueryManager, QUERIES_TYPES, QUERY_TYPE_GET_ONE_USER
+from obasparql.query_manager import QueryManager
+from obasparql.static import QUERIES_TYPES, QUERY_TYPE_GET_ONE_USER
 from obasparql.utils import generate_uri
 from tests.settings import *
 
@@ -19,7 +20,6 @@ class TestQueryManager(unittest.TestCase):
                                           endpoint=model_catalog_endpoint,
                                           named_graph_base=model_catalog_graph_base,
                                           uri_prefix=model_catalog_prefix)
-
 
     def test_obtain_query_get_one_user(self):
         """
@@ -37,7 +37,7 @@ class TestQueryManager(unittest.TestCase):
         }
 
         resource = self.query_manager.run_query_get(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
-                                                   query_type=query_type, request_args=request_args)
+                                                    query_type=query_type, request_args=request_args)
 
         self.assertTrue(resource)
 
@@ -57,8 +57,8 @@ class TestQueryManager(unittest.TestCase):
         }
 
         resource = self.query_manager.run_query_get(query_directory=owl_class_name,
-                                                                 owl_class_uri=owl_class_uri, query_type=query_type,
-                                                                 request_args=request_args)
+                                                    owl_class_uri=owl_class_uri, query_type=query_type,
+                                                    request_args=request_args)
 
         self.assertEqual(resource_uri, resource["id"])
 
@@ -104,7 +104,7 @@ class TestQueryManager(unittest.TestCase):
         query_template = getattr(self.query_manager, query_directory)[query_type]
 
         results = self.query_manager.dispatch_sparql_query(raw_sparql_query=query_template,
-                                             request_args=request_args)
+                                                           request_args=request_args)
         # prefixes, triples = self.query_manager.convert_json_to_triples(results)
         self.assertIsNotNone(json.loads(results))
 
