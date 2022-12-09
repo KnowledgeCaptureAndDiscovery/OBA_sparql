@@ -1,9 +1,9 @@
-from http.client import HTTPException
 import json
 import logging.config
 import os
 from pathlib import Path
 from typing import Dict, Tuple
+from starlette.exceptions import HTTPException
 
 import validators
 from pyld import jsonld
@@ -15,7 +15,7 @@ from obasparql.static import CONTEXT_ID_KEY, CONTEXT_OVERWRITE_CLASS_FILE, CONTE
 from obasparql.utils import generate_new_id, primitives, convert_snake
 
 glogger = logging.getLogger("grlc")
-logger = logging.getLogger('oba')
+logger = logging.getLogger('fastapi')
 
 def remove_jsonld_key(tmp_context_class, key):
     """Remove json key from context
@@ -139,50 +139,42 @@ class QueryManager:
             request_args[PER_PAGE_KEY] = kwargs[PER_PAGE_KEY]
 
         if CUSTOM_QUERY_NAME in kwargs:
-            return self.get_resource_custom(request_args=request_args,
+            response = self.get_resource_custom(request_args=request_args,
                                             **kwargs)
         else:
-            return self.get_resource_not_custom(request_args=request_args,
+            response = self.get_resource_not_custom(request_args=request_args,
                                                 **kwargs)
+        return response
 
     def put_resource(self,
-                      user,
-                      body,
-                      rdf_type_uri,
-                      rdf_type_name=None,
-                      kls=None):
+                id,
+                user,
+                body,
+                rdf_type_uri,
+                rdf_type_name=None,
+                kls=None):
         """Handle a PUT method to update a resource
 
         Returns:
             dict: The response of the request as JSON format
         """
-        resource_uri = self.build_instance_uri(rdf_type_uri)
+        resource_uri = self.build_instance_uri(id)
         body = body.dict()
         body["id"] = resource_uri            
         try:
             username = user 
         except Exception as err:
             logger.error("Missing username", exc_info=True)
-            raise(HTTPException(status_code=400, detail="Bad request: missing username")) from err
+            raise HTTPException(status_code=400, detail="Bad request: missing username") from err
 
-
-        try:
-            if not self.get_resource(id=body[ID_KEY], user=username, rdf_type_uri=rdf_type_uri, rdf_type_name=rdf_type_name, kls=kls):
-                raise HTTPException(status_code=404, detail="Resource not found")
-        except Exception as err:
-            raise HTTPException(status_code=500, detail="Error while retrieving the resource") from err
-
+        response = self.get_resource(id=id, username=username, rdf_type_uri=rdf_type_uri, rdf_type_name=rdf_type_name, kls=kls)
         # DELETE QUERY
         request_args_delete: Dict[str, str] = {
             "resource": resource_uri,
             "g": self.generate_graph(username),
             "delete_incoming_relations": False
         }
-
-        try:
-            self.run_query_delete(request_args_delete)
-        except Exception as err:
-            raise HTTPException(status_code=500, detail=str(err)) from err
+        self.run_query_delete(request_args_delete)
 
         # INSERT QUERY
         body_json = self.json_to_jsonld(body)
@@ -198,11 +190,15 @@ class QueryManager:
         try:
             self.run_query_insert(request_args=request_args)
         except Exception as err:
+            logger.error("Exception occurred", exc_info=True)
             raise HTTPException(status_code=500, detail=str(err)) from err
 
+        # GET QUERY
         try:
-            self.get_resource(id=body[ID_KEY], user=username, rdf_type_uri=rdf_type_uri, rdf_type_name=rdf_type_name, kls=kls)
+            response = self.get_resource(id=id, username=username, rdf_type_uri=rdf_type_uri, rdf_type_name=rdf_type_name, kls=kls)
+            return response
         except Exception as err:
+            logger.error("Error while retrieving the resource", exc_info=True)
             raise HTTPException(status_code=500, detail="Error while retrieving the resource") from err
             
     def delete_resource(self,
@@ -229,11 +225,18 @@ class QueryManager:
             "g": self.generate_graph(user),
             "delete_incoming_relations": True
         }
+        # GET QUERY
         try:
-            self.run_query_delete(request_args)
+            response = self.get_resource(id=resource_uri, username=user, rdf_type_uri=rdf_type_uri, rdf_type_name=rdf_type_name, kls=kls)
         except Exception as err:
-            raise HTTPException(status_code=500, detail=str(err)) from err
-        return "Deleted"
+            logger.error("Error while retrieving the resource", exc_info=True)
+            raise HTTPException(status_code=500, detail="Error while retrieving the resource") from err
+
+        if not response:
+            logger.error("Error while retrieving the resource", exc_info=True)
+            raise HTTPException(status_code=404, detail="Resource not found")
+
+        self.run_query_delete(request_args)
 
     def post_resource(self,
                       user,
@@ -256,6 +259,8 @@ class QueryManager:
         body[ID_KEY] = generate_new_id()
         self.traverse_obj(body, user)
         self.insert_all_resources(body, user)
+        if '@context' in body:
+            del body['@context']
         return body
 
     # Helper get methods
@@ -382,17 +387,21 @@ class QueryManager:
         try:
             result = self.dispatch_sparql_query(
                 raw_sparql_query=query_template, request_args=request_args)
-        except Exception as exception: 
-            raise HTTPException(status_code=500, detail="Unable to send query") from exception
+        except Exception as err: 
+            logger.error("Unable to send query: %s", err)
+            raise HTTPException(status_code=500, detail="Unable to send query") from err
 
         logger.debug("response: %s", result)
+        if result is None:
+            raise HTTPException(status_code=404, detail="Resource not found")
+
         try:
             if "resource" in request_args and not skip_id_framing:
                 return self.frame_results(result, owl_class_uri,
                                         request_args["resource"])
             return self.frame_results(result, owl_class_uri)
-        except Exception as exception:
-            raise HTTPException(status_code=500, detail="Unable to frame the results") from exception
+        except Exception as err:
+            raise HTTPException(status_code=500, detail="Unable to frame the results") from err
 
     def overwrite_endpoint_context(self, endpoint_context: dict):
         """Overwrite the endpoint context
@@ -559,6 +568,8 @@ class QueryManager:
         try:
             self.sparql.update(query_string)
         except Exception as err:
+            logger.error("Exception occurred", exc_info=True)
+            logger.error(query_string)
             raise err
 
     def run_query_delete(self, request_args: str):
@@ -577,9 +588,9 @@ class QueryManager:
             logger.info("deleting %s", request_args["resource"])
             logger.debug("deleting: %s", query_string)
             self.sparql.update(query_string)
-        except Exception as e:
+        except Exception as exception:
             logger.error("Exception occurred", exc_info=True)
-            raise e
+            raise HTTPException(status_code=500, detail=str(exception)) from exception
 
         if request_args["delete_incoming_relations"]:
             query_string_reverse = f'' \
@@ -589,8 +600,9 @@ class QueryManager:
                 logger.info("deleting incoming relations %s", request_args["resource"])
                 logger.debug("deleting: %s", query_string_reverse)
                 self.sparql.update(query_string_reverse)
-            except Exception as e:
-                raise e
+            except Exception as exception:
+                logger.error("Exception occurred", exc_info=True)
+                raise HTTPException(status_code=500, detail=str(exception)) from exception
 
     def build_query_insert(self, resource_json: str):
         """Convert the JSON-LD to triple to be inserted"""
