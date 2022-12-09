@@ -38,7 +38,7 @@ class TestQuery(unittest.TestCase):
             "page": 1
         }
 
-        results = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
+        results = self.query_manager.run_query_get(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
                                                   query_type=query_type, request_args=grlc_request_args)
         assert(results)
         assert(results[0]['hasComponentLocation'])
@@ -58,7 +58,7 @@ class TestQuery(unittest.TestCase):
             "g": self.usergraph,
         }
 
-        results = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
+        results = self.query_manager.run_query_get(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
                                                   query_type=query_type, request_args=grlc_request_args)
         assert(results)
 
@@ -77,7 +77,7 @@ class TestQuery(unittest.TestCase):
             "g": self.usergraph
         }
 
-        resource = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
+        resource = self.query_manager.run_query_get(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
                                                    query_type=query_type, request_args=request_args)
         self.assertIn("Parameter", resource['type'][0])
         self.assertIn("position", resource)
@@ -97,7 +97,7 @@ class TestQuery(unittest.TestCase):
             "g": self.usergraph
         }
 
-        resource = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
+        resource = self.query_manager.run_query_get(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
                                                    query_type=query_type, request_args=request_args)
         self.assertIn("ModelConfiguration", resource['type'])
         self.assertEqual(resource["id"], resource_uri)
@@ -117,7 +117,7 @@ class TestQuery(unittest.TestCase):
             "g": self.usergraph
         }
 
-        resource = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=resource_type_uri,
+        resource = self.query_manager.run_query_get(query_directory=owl_class_name, owl_class_uri=resource_type_uri,
                                                    query_type=query_type, request_args=request_args)
         self.assertEqual(resource["id"], resource_uri)
 

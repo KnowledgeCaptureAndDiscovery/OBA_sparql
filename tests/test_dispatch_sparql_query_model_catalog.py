@@ -4,7 +4,8 @@ import unittest
 from typing import Dict
 
 
-from obasparql.query_manager import QueryManager, QUERIES_TYPES, QUERY_TYPE_GET_ONE_USER
+from obasparql.query_manager import QueryManager
+from obasparql.static import QUERIES_TYPES, QUERY_TYPE_GET_ONE_USER
 from obasparql.utils import generate_uri
 from tests.settings import *
 

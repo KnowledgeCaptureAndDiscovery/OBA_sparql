@@ -1,11 +1,10 @@
 import json
+import unittest
 import logging.config
 from typing import Dict
 
 from obasparql.utils import generate_uri
-import unittest
-from obasparql.query_manager import QueryManager, QUERIES_TYPES, QUERY_TYPE_GET_ONE_USER
-
+from obasparql.static import QUERY_TYPE_GET_ONE_USER
 from obasparql import QueryManager
 from tests.settings import *
 
@@ -41,18 +40,20 @@ class TestFrame(unittest.TestCase):
         resource_uri = "https://w3id.org/okn/i/mint/CYCLES"
         query_type = QUERY_TYPE_GET_ONE_USER
 
-        #grlc args
+        # grlc args
         request_args: Dict[str, str] = {
             "resource": resource_uri,
             "g": graph_user
         }
-        response = self.query_manager.obtain_query(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
-                                                   query_type=query_type, request_args=request_args)
+        response = self.query_manager.run_query_get(query_directory=owl_class_name, owl_class_uri=owl_class_uri,
+                                                    query_type=query_type, request_args=request_args)
         self.assertTrue(response)
         for author in response["author"]:
             self.assertIsInstance(author, dict)
         for author in response["hasContactPerson"]:
             self.assertIsInstance(author, dict)
         assert 'operatingSystems' in response
+
+
 if __name__ == '__main__':
     unittest.main()

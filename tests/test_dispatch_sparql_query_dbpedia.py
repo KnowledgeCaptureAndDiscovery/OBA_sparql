@@ -2,7 +2,8 @@ import json
 import logging
 import unittest
 from typing import Dict
-from obasparql.query_manager import QueryManager, QUERIES_TYPES
+from obasparql.query_manager import QueryManager
+from obasparql.static import QUERIES_TYPES
 from obasparql.utils import generate_uri
 from tests.settings import *
 

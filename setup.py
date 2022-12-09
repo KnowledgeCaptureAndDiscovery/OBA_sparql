@@ -49,9 +49,9 @@ setup(
         "requests>=2.20.0",
         "simplejson==3.17.6",
         "six>=1.11.0",
-        "urllib3>=1.26.5",
+        "urllib3<1.27,>=1.21.1 ",
         "webencodings==0.5.1",
-        "werkzeug>=0.15.3",
+        "starlette==0.20.4",
         "PyLD>=2.0.3",
     ]
 )
