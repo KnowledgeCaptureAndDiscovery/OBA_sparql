@@ -122,6 +122,51 @@ class QueryManager:
         self.context = {CONTEXT_KEY: self.context}
         self.class_context = tmp_context_class.copy()
 
+    def create_graph(self, graph_uri, triples):
+        """
+        Create a new graph in the endpoint
+
+        Parameters
+        ----------
+        graph_uri: str
+            The URI of the graph to create
+
+        Returns
+        -------
+        """
+        created = self.get_graph(graph_uri)
+        query = 'PREFIX dc: <http://purl.org/dc/elements/1.1/> PREFIX ns: <http://example.org/ns#> INSERT DATA {{ GRAPH <{0}> {{ {1} }} }}'.format(graph_uri, triples)
+        response = self.sparql.update(query)
+        return True
+
+
+    def get_graph(self, graph_uri):
+        '''
+        Check if a graph exists in the endpoint
+
+        Parameters
+        ----------
+        graph_uri: str
+            The URI of the graph to check
+
+        Returns
+        -------
+        bool
+            True if the graph exists, False otherwise
+        '''
+        query = 'SELECT ?g WHERE { GRAPH ?g {}}'
+        response = self.sparql.query(query, overrideMimeType="application/json")
+        response_json = json.loads(response)
+        if "results" in response_json and "bindings" in response_json["results"]:
+            bindings = response_json["results"]["bindings"]
+            for result in bindings:
+                if result["g"]["value"] == graph_uri:
+                    return True
+        return False
+
+
+
+
     def get_resource(self, **kwargs):
         """
         Handle the GET Requests
@@ -371,7 +416,7 @@ class QueryManager:
 
         Args:
             query_directory (str): The directory where the query template is located
-            owl_class_uri (str): The uri of the class 
+            owl_class_uri (str): The uri of the class
             query_type (str): The type of query
             request_args (str, optional): The arguments of the query. Defaults to None.
             skip_id_framing (bool, optional): Indicates if the id framing must be skipped. Defaults to False.

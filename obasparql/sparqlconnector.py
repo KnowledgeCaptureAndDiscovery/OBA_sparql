@@ -75,7 +75,7 @@ class SPARQLConnector(object):
 
         self._method = method
 
-    def query(self, query, default_graph: str = None, named_graph: str = None):
+    def query(self, query, default_graph: str = None, named_graph: str = None, overrideMimeType: str = None):
 
         if not self.query_endpoint:
             raise SPARQLConnectorException("Query endpoint not set!")
@@ -85,7 +85,10 @@ class SPARQLConnector(object):
         if default_graph is not None and type(default_graph) != BNode:
             params["default-graph-uri"] = default_graph
 
-        headers = {"Accept": _response_mime_types[self.returnFormat]}
+        if overrideMimeType is None:
+            headers = {"Accept": _response_mime_types[self.returnFormat]}
+        else:
+            headers = {"Accept": overrideMimeType}
 
         args = dict(self.kwargs)
 
@@ -180,3 +183,4 @@ class SPARQLConnector(object):
             Request(self.update_endpoint + qsa,
                     data=query.encode(),
                     headers=args["headers"]))
+        return res

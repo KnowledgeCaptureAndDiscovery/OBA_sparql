@@ -1,5 +1,6 @@
 import json
 import logging
+import random
 import unittest
 from typing import Dict
 
@@ -20,6 +21,26 @@ class TestQueryManager(unittest.TestCase):
                                           endpoint=model_catalog_endpoint,
                                           named_graph_base=model_catalog_graph_base,
                                           uri_prefix=model_catalog_prefix)
+
+    def test_create_graph(self):
+        """
+        Test to obtain the graph
+        """
+        graph_uri = "http://endpoint.mint.isi.edu/modelCatalog-1.8.0/data/randomExists" + str(random.randint(1, 1000))
+        triples = """
+        <http://example/book1>  ns:price  42
+        """
+
+        graph = self.query_manager.create_graph(graph_uri, triples)
+        self.assertTrue(graph)
+
+    def test_get_graph(self):
+        """
+        Test to obtain the graph
+        """
+        graph_uri = "http://endpoint.mint.isi.edu/modelCatalog-1.8.0/data/random" + str(random.randint(1, 1000))
+        graph = self.query_manager.get_graph(graph_uri)
+        self.assertFalse(graph)
 
     def test_obtain_query_get_one_user(self):
         """
